@@ -87,7 +87,7 @@ occupancy higher.
   VGPR-only and not V+A+S.
 
 Related: [gfx950](gfx950.md)
-(gfx950/CDNA4 caps), [memory-hierarchy](../../kernel-optimization/10-levers/memory-hierarchy.md)
+(gfx950/CDNA4 caps), [memory-hierarchy](../../kernel-optimization/levers/memory-hierarchy.md)
 (storage taxonomy), [hipcc-agpr-pinning](../../papers/hipkittens/01-paper/hipcc-agpr-pinning.md) (AGPR-as-MFMA-input
 allocator refusal).
 

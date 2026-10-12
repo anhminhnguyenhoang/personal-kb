@@ -87,4 +87,4 @@ Decide what the kernel computes before deciding how it should run.
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#define-the-problem).
 
 ---
-Next: [establish-baselines](establish-baselines.md). Lane-mapping K-pack tolerance bug: [work-decomposition](../10-levers/work-decomposition.md). The family and its parameters are the contract — see the variant lists in [algorithmic-mapping](../10-levers/algorithmic-mapping.md).
+Next: [establish-baselines](establish-baselines.md). Lane-mapping K-pack tolerance bug: [work-decomposition](../levers/work-decomposition.md). The family and its parameters are the contract — see the variant lists in [algorithmic-mapping](../levers/algorithmic-mapping.md).

@@ -159,4 +159,4 @@ When the tile body lives inside an `scf.for` persistent loop:
   dominance error).
 
 ---
-Related: [measurement](../../kernel-optimization/00-method/measurement.md) · [hot-loop-scheduling](hot-loop-scheduling.md) · [work-decomposition](../../kernel-optimization/10-levers/work-decomposition.md)
+Related: [measurement](../../kernel-optimization/method/measurement.md) · [hot-loop-scheduling](hot-loop-scheduling.md) · [work-decomposition](../../kernel-optimization/levers/work-decomposition.md)

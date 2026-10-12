@@ -94,4 +94,4 @@ python ck_dsl/dsl_docs/optimization/utilities/tools/stage5_compare/compare_rocpr
 ```
 
 ---
-Diagnostic how-to: [dsl-probe-workflow](dsl-probe-workflow.md) · benchmark hygiene in [establish-baselines](../../kernel-optimization/00-method/establish-baselines.md). Paths drift — verify against current source before relying on them.
+Diagnostic how-to: [dsl-probe-workflow](dsl-probe-workflow.md) · benchmark hygiene in [establish-baselines](../../kernel-optimization/method/establish-baselines.md). Paths drift — verify against current source before relying on them.

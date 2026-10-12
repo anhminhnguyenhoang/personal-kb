@@ -79,4 +79,4 @@ An optimization is done when:
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#reporting-template).
 
 ---
-What to measure: [establish-baselines](../00-method/establish-baselines.md). What to inspect: [isa-resource-inspection](../10-levers/isa-resource-inspection.md).
+What to measure: [establish-baselines](../method/establish-baselines.md). What to inspect: [isa-resource-inspection](../levers/isa-resource-inspection.md).

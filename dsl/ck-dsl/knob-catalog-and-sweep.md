@@ -340,4 +340,4 @@ The DSL spec dataclasses produce one canonical name per spec via
 sweep CSVs.
 
 ---
-The lever sections explained: [algorithmic-mapping](../../kernel-optimization/10-levers/algorithmic-mapping.md) through [isa-resource-inspection](../../kernel-optimization/10-levers/isa-resource-inspection.md). Op checklists: [op-specific-checklists](../../kernel-optimization/20-autotuning/op-specific-checklists.md).
+The lever sections explained: [algorithmic-mapping](../../kernel-optimization/levers/algorithmic-mapping.md) through [isa-resource-inspection](../../kernel-optimization/levers/isa-resource-inspection.md). Op checklists: [op-specific-checklists](../../kernel-optimization/autotuning/op-specific-checklists.md).

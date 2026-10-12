@@ -86,5 +86,5 @@ source: CK DSL Optimization Runbook (ROCm/rocm-libraries@1efeadd, projects/compo
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#failure-modes).
 
 ---
-Heuristics for fixing each: [decision-heuristics](decision-heuristics.md). Tolerance signatures: [define-the-problem](../00-method/define-the-problem.md).
+Heuristics for fixing each: [decision-heuristics](decision-heuristics.md). Tolerance signatures: [define-the-problem](../method/define-the-problem.md).
 

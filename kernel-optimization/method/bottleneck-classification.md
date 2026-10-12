@@ -195,4 +195,4 @@ variant. Use rocprof to confirm, not to discover.
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#bottleneck-classification).
 
 ---
-Then pick a lever family: [algorithmic-mapping](../10-levers/algorithmic-mapping.md), [memory-hierarchy](../10-levers/memory-hierarchy.md). Static probes how-to: [dsl-probe-workflow](../../dsl/ck-dsl/dsl-probe-workflow.md).
+Then pick a lever family: [algorithmic-mapping](../levers/algorithmic-mapping.md), [memory-hierarchy](../levers/memory-hierarchy.md). Static probes how-to: [dsl-probe-workflow](../../dsl/ck-dsl/dsl-probe-workflow.md).

@@ -19,7 +19,7 @@ Start at the bottom of the stack (hardware) and work up — every HK design choi
 - [chiplet-scheduling](01-paper/chiplet-scheduling.md) — Algorithm 1: XCD grouping + hierarchical windowed traversal, the L2/LLC tension and L2-greedy trap.
 
 ### 02 · Applied in practice
-- [chiplet-xcd-remap](../../kernel-optimization/10-levers/chiplet-xcd-remap.md) — how a library's PID remap helpers map line-for-line onto Algorithm 1; includes an [interactive viz](../../kernel-optimization/10-levers/assets/remap_xcd_pid_grid.html).
+- [chiplet-xcd-remap](../../kernel-optimization/levers/chiplet-xcd-remap.md) — how a library's PID remap helpers map line-for-line onto Algorithm 1; includes an [interactive viz](../../kernel-optimization/levers/assets/remap_xcd_pid_grid.html).
 - Adoption of HK in a production MLA-decode kernel: see `## Adoption` in [overview-thesis](01-paper/overview-thesis.md).
 
 ### Reference

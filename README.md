@@ -13,7 +13,7 @@ General notes on GPU hardware, kernel-optimization method, research papers, and 
 
 ## Conventions
 
-- Numeric prefixes show reading order.
+- Reading order lives in each folder's README. Folders carry no number prefixes, except inside a paper where the sections run in sequence (01-, 02-, ...).
 - Every note has YAML frontmatter (`name`, `description`, `source`) and a related-links footer.
 - Facts about external work cite public primary sources.
 - `_sources/` keeps the author's own research captures.

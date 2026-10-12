@@ -76,4 +76,4 @@ mean. A bf16 path is not bit-exact against an fp32 reference, so do not expect
 - **Use bitwise parity for layout-only transforms.** Preshuffles, remaps and gating change where data lives, not the arithmetic. The outputs must match the baseline exactly (max diff 0); a tolerance-based check can hide a layout mismatch.
 
 ---
-Related: [establish-baselines](establish-baselines.md) · [bottleneck-classification](bottleneck-classification.md) · [failure-modes](../30-failure-modes/failure-modes.md)
+Related: [establish-baselines](establish-baselines.md) · [bottleneck-classification](bottleneck-classification.md) · [failure-modes](../failure-modes/failure-modes.md)

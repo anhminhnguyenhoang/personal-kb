@@ -383,4 +383,4 @@ Sources:
 
 
 ---
-Repo implementation: [pid-preprocessing-vs-algo1](../../../kernel-optimization/10-levers/chiplet-xcd-remap.md). Related: [overview-thesis](overview-thesis.md)
+Repo implementation: [pid-preprocessing-vs-algo1](../../../kernel-optimization/levers/chiplet-xcd-remap.md). Related: [overview-thesis](overview-thesis.md)

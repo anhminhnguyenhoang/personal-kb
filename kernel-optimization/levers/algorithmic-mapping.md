@@ -202,5 +202,5 @@ sub-tile transpose, N-D permutation, and im2col copy.
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#algorithmic-mapping).
 
 ---
-Next: [work-decomposition](work-decomposition.md). Per-family variant levers: [knob-catalog-and-sweep](../../dsl/ck-dsl/knob-catalog-and-sweep.md). Op checklists: [op-specific-checklists](../20-autotuning/op-specific-checklists.md).
+Next: [work-decomposition](work-decomposition.md). Per-family variant levers: [knob-catalog-and-sweep](../../dsl/ck-dsl/knob-catalog-and-sweep.md). Op checklists: [op-specific-checklists](../autotuning/op-specific-checklists.md).
 

@@ -76,7 +76,7 @@ Autotuning = ② and ③ done automatically, thousands of times.
 > gfx950 caveat: the LLVM backend can silently drop explicit
 > `s_sched_barrier` / `s_sched_group_barrier`; verify they survived lowering
 > before trusting a hint. See
-> [pipelining-scheduling](../../kernel-optimization/10-levers/pipelining-scheduling.md).
+> [pipelining-scheduling](../../kernel-optimization/levers/pipelining-scheduling.md).
 
 ---
-Related: [measurement](../../kernel-optimization/00-method/measurement.md) · [bottleneck-classification](../../kernel-optimization/00-method/bottleneck-classification.md) · [pipelining-scheduling](../../kernel-optimization/10-levers/pipelining-scheduling.md)
+Related: [measurement](../../kernel-optimization/method/measurement.md) · [bottleneck-classification](../../kernel-optimization/method/bottleneck-classification.md) · [pipelining-scheduling](../../kernel-optimization/levers/pipelining-scheduling.md)

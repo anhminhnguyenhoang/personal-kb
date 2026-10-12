@@ -54,5 +54,5 @@ source: CK DSL Optimization Runbook (ROCm/rocm-libraries@1efeadd, projects/compo
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#decision-heuristics).
 
 ---
-The one-page decision tree: [diagnostic-decision-tree](../00-method/diagnostic-decision-tree.md).
+The one-page decision tree: [diagnostic-decision-tree](../method/diagnostic-decision-tree.md).
 

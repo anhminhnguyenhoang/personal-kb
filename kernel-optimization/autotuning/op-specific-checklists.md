@@ -81,4 +81,4 @@ source: CK DSL Optimization Runbook (ROCm/rocm-libraries@1efeadd, projects/compo
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#op-specific-checklists).
 
 ---
-Family instance tables: [algorithmic-mapping](../10-levers/algorithmic-mapping.md). Full knob list: [knob-catalog-and-sweep](../../dsl/ck-dsl/knob-catalog-and-sweep.md). Failure modes per op: [failure-modes](../30-failure-modes/failure-modes.md).
+Family instance tables: [algorithmic-mapping](../levers/algorithmic-mapping.md). Full knob list: [knob-catalog-and-sweep](../../dsl/ck-dsl/knob-catalog-and-sweep.md). Failure modes per op: [failure-modes](../failure-modes/failure-modes.md).

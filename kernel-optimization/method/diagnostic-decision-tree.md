@@ -102,6 +102,6 @@ Action:  per-iter ISA diff before/after the change
          — never declare a structural change a win without it
 
 ---
-Each node maps to a lever section in [02-levers/](../10-levers) or to [dsl-probe-workflow](../../dsl/ck-dsl/dsl-probe-workflow.md). Heuristics behind it: [decision-heuristics](../30-failure-modes/decision-heuristics.md).
+Each node maps to a lever section in [02-levers/](../levers) or to [dsl-probe-workflow](../../dsl/ck-dsl/dsl-probe-workflow.md). Heuristics behind it: [decision-heuristics](../failure-modes/decision-heuristics.md).
 
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#diagnostic-decision-tree).

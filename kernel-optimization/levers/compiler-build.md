@@ -83,4 +83,4 @@ bottleneck class, and the kernel structure.
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#compiler-build).
 
 ---
-Flag safety table: [knob-catalog-and-sweep](../../dsl/ck-dsl/knob-catalog-and-sweep.md). gfx950 compiler caveats: [target-architecture-gfx950](../../hardware/amd-cdna/gfx950.md). Anti-pattern (flags before ISA): [decision-heuristics](../30-failure-modes/decision-heuristics.md).
+Flag safety table: [knob-catalog-and-sweep](../../dsl/ck-dsl/knob-catalog-and-sweep.md). gfx950 compiler caveats: [target-architecture-gfx950](../../hardware/amd-cdna/gfx950.md). Anti-pattern (flags before ISA): [decision-heuristics](../failure-modes/decision-heuristics.md).

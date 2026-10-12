@@ -113,4 +113,4 @@ probe_occupancy([("my_variant", kdef, spec.num_warps)], arch=ARCH_GFX950)
 | `structural.fmul` / `fadd` | `probe_intrinsic_counts.py` | post-lowering scalar arithmetic count |
 
 ---
-Cheap-filter rationale: [bottleneck-classification](../../kernel-optimization/00-method/bottleneck-classification.md) (S3.1b). Probe entries in the knob catalog: [knob-catalog-and-sweep](knob-catalog-and-sweep.md) (S12.1.Q). Commands: [reproducible-commands](reproducible-commands.md).
+Cheap-filter rationale: [bottleneck-classification](../../kernel-optimization/method/bottleneck-classification.md) (S3.1b). Probe entries in the knob catalog: [knob-catalog-and-sweep](knob-catalog-and-sweep.md) (S12.1.Q). Commands: [reproducible-commands](reproducible-commands.md).
