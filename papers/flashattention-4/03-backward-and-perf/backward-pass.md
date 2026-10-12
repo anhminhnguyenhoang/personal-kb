@@ -31,7 +31,7 @@ behind the previous tile's matmuls.
 
 ## 2-CTA MMA + the dQ reduction problem
 
-[2-CTA MMA](../../../hardware/nvidia-blackwell/01-blackwell-tmem-2cta.md) partitions **M = 256**
+[2-CTA MMA](../../../hardware/nvidia-blackwell/blackwell-tmem-2cta.md) partitions **M = 256**
 across a CTA pair with **N = K = 128**, so each CTA only stages **half of
 operand B** → **halves operand-B SMEM traffic** (directly attacking the
 bottleneck).
@@ -90,4 +90,4 @@ Sources:
 - [Modal: reverse-engineering FA4](https://modal.com/blog/reverse-engineer-flash-attention-4)
 
 ---
-Related: [overview](../01-design/overview.md) · [TMEM & 2-CTA](../../../hardware/nvidia-blackwell/01-blackwell-tmem-2cta.md) · [warp-specialization](../02-algorithm/warp-specialization-pipeline.md) · [glossary](../glossary.md)
+Related: [overview](../01-design/overview.md) · [TMEM & 2-CTA](../../../hardware/nvidia-blackwell/blackwell-tmem-2cta.md) · [warp-specialization](../02-algorithm/warp-specialization-pipeline.md) · [glossary](../glossary.md)

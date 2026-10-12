@@ -9,7 +9,7 @@ source: _sources/flash-attention-v4-research.md (synthesis; see footer for prima
 FA3 ran a **2-stage** pipeline. FA4 runs a **~5-stage** warp-specialized async
 pipeline — the structural change that lets softmax, correction, MMA, and memory
 all run concurrently instead of serializing. It's only practical because of
-[Blackwell's async UMMA + TMEM](../../../hardware/nvidia-blackwell/01-blackwell-tmem-2cta.md):
+[Blackwell's async UMMA + TMEM](../../../hardware/nvidia-blackwell/blackwell-tmem-2cta.md):
 single-thread MMA launch and TMEM accumulators free the registers that warp
 specialization needs.
 
@@ -81,4 +81,4 @@ Sources:
 - [Colfax Research deep-dive](https://research.colfax-intl.com/flashattention-4-algorithm-and-kernel-pipelining-co-design-for-asymmetric-hardware-scaling/)
 
 ---
-Related: [TMEM & 2-CTA](../../../hardware/nvidia-blackwell/01-blackwell-tmem-2cta.md) · [software-exp](software-exponential.md) · [conditional-softmax](conditional-softmax-rescaling.md) · [backward & perf](../03-backward-and-perf/backward-pass.md)
+Related: [TMEM & 2-CTA](../../../hardware/nvidia-blackwell/blackwell-tmem-2cta.md) · [software-exp](software-exponential.md) · [conditional-softmax](conditional-softmax-rescaling.md) · [backward & perf](../03-backward-and-perf/backward-pass.md)

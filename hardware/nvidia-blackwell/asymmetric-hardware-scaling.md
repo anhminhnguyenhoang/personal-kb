@@ -63,7 +63,7 @@ pass, shared-memory bandwidth in the backward pass.** Each gets its own fix
 | Bottleneck | FA4 response | Note |
 |---|---|---|
 | Exp unit saturated (fwd) | Emulate `exp2` on FMA units; conditional rescaling cuts corrections ~10× | [software-exp](../../papers/flashattention-4/02-algorithm/software-exponential.md), [conditional-softmax](../../papers/flashattention-4/02-algorithm/conditional-softmax-rescaling.md) |
-| SMEM bandwidth (bwd) | 2-CTA MMA halves operand traffic; TMEM holds accumulators | [tmem-2cta](01-blackwell-tmem-2cta.md), [backward](../../papers/flashattention-4/03-backward-and-perf/backward-pass.md) |
+| SMEM bandwidth (bwd) | 2-CTA MMA halves operand traffic; TMEM holds accumulators | [tmem-2cta](blackwell-tmem-2cta.md), [backward](../../papers/flashattention-4/03-backward-and-perf/backward-pass.md) |
 | Serial dependency of softmax↔MMA | 5-stage warp-specialized async pipeline | [warp-specialization](../../papers/flashattention-4/02-algorithm/warp-specialization-pipeline.md) |
 
 ## Why this rhymes with the AMD story
@@ -83,4 +83,4 @@ Sources:
 - [Modal: reverse-engineering FA4](https://modal.com/blog/reverse-engineer-flash-attention-4)
 
 ---
-Next: [Blackwell TMEM & 2-CTA MMA](01-blackwell-tmem-2cta.md) · then the [algorithm tricks](../../papers/flashattention-4/02-algorithm/conditional-softmax-rescaling.md)
+Next: [Blackwell TMEM & 2-CTA MMA](blackwell-tmem-2cta.md) · then the [algorithm tricks](../../papers/flashattention-4/02-algorithm/conditional-softmax-rescaling.md)

@@ -13,4 +13,4 @@ Hardware facts that kernel design depends on, for AMD CDNA and NVIDIA Blackwell.
 ## NVIDIA Blackwell (nvidia-blackwell/)
 
 - [asymmetric-hardware-scaling](nvidia-blackwell/asymmetric-hardware-scaling.md) — Blackwell tensor cores scaled 2.25x but SFUs and SMEM bandwidth stayed flat, so softmax exp became the attention bottleneck.
-- [blackwell-tmem-2cta](nvidia-blackwell/01-blackwell-tmem-2cta.md) — TCGEN05/UMMA async tensor cores, 256 KB Tensor Memory, and 2-CTA cluster MMA; why they allow deeper pipelines than Hopper.
+- [blackwell-tmem-2cta](nvidia-blackwell/blackwell-tmem-2cta.md) — TCGEN05/UMMA async tensor cores, 256 KB Tensor Memory, and 2-CTA cluster MMA; why they allow deeper pipelines than Hopper.

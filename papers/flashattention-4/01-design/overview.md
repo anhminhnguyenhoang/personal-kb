@@ -32,7 +32,7 @@ subtitle and its actual contribution.
 | 1 | **Software-emulated exponential** | exp-unit (fwd) bottleneck | Compute `exp2` with a cubic polynomial on **FMA units** instead of the SFU; `f32x2` does two at once | [software-exp](../02-algorithm/software-exponential.md) |
 | 2 | **Conditional online-softmax rescaling** | exp/correction overhead | Only rescale O when row-max jumps past threshold τ → **~10× fewer** corrections | [conditional-softmax](../02-algorithm/conditional-softmax-rescaling.md) |
 | 3 | **5-stage warp-specialized pipeline** | softmax↔MMA serialization | load / MMA / softmax / correction / epilogue warps; ping-pong two Q tiles | [warp-specialization](../02-algorithm/warp-specialization-pipeline.md) |
-| 4 | **TMEM + 2-CTA MMA** | SMEM bandwidth (bwd) | accumulators in Tensor Memory, MMA spanning a CTA pair halves operand traffic | [tmem-2cta](../../../hardware/nvidia-blackwell/01-blackwell-tmem-2cta.md), [backward](../03-backward-and-perf/backward-pass.md) |
+| 4 | **TMEM + 2-CTA MMA** | SMEM bandwidth (bwd) | accumulators in Tensor Memory, MMA spanning a CTA pair halves operand traffic | [tmem-2cta](../../../hardware/nvidia-blackwell/blackwell-tmem-2cta.md), [backward](../03-backward-and-perf/backward-pass.md) |
 
 ## How a forward tile flows
 

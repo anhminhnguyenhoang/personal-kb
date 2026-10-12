@@ -22,7 +22,7 @@ Start with the hardware — every FA4 trick is a response to one Blackwell fact.
 
 ### 00 · Fundamentals (the hardware, in `hardware/nvidia-blackwell/`)
 - [asymmetric-hardware-scaling](../../hardware/nvidia-blackwell/asymmetric-hardware-scaling.md) — **read this first.** Tensor cores scaled 2.25× but SFUs and SMEM didn't, so exp (forward) and SMEM bandwidth (backward) became the bottleneck. The roofline in cycles.
-- [blackwell-tmem-2cta](../../hardware/nvidia-blackwell/01-blackwell-tmem-2cta.md) — TCGEN05/UMMA async tensor cores, 256 KB Tensor Memory, and 2-CTA cluster MMA; why they enable deeper pipelines than Hopper.
+- [blackwell-tmem-2cta](../../hardware/nvidia-blackwell/blackwell-tmem-2cta.md) — TCGEN05/UMMA async tensor cores, 256 KB Tensor Memory, and 2-CTA cluster MMA; why they enable deeper pipelines than Hopper.
 
 ### 01 · Design overview
 - [overview](01-design/overview.md) — the co-design thesis, the four headline techniques in one table, performance numbers, and what's still missing. **The map of the whole topic.**
