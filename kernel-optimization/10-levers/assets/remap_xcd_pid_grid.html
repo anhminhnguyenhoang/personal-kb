@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>remap_xcd &amp; pid_grid — interactive walkthrough</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel-2: #1e222b;
+    --ink: #e6e7ea;
+    --muted: #9aa1ad;
+    --accent: #7cc6ff;
+    --warn: #ffb86b;
+    --good: #8fd987;
+    --bad:  #ff7b7b;
+    --line: #2a2f3a;
+    --code-bg: #0b0d12;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.55;
+  }
+  header {
+    padding: 28px 36px 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  header h1 {
+    margin: 0 0 4px; font-size: 24px; letter-spacing: -0.01em;
+  }
+  header .sub {
+    color: var(--muted); font-size: 14px;
+  }
+  nav {
+    padding: 10px 36px;
+    border-bottom: 1px solid var(--line);
+    display: flex; gap: 18px; flex-wrap: wrap;
+    font-size: 13px;
+  }
+  nav a {
+    color: var(--accent); text-decoration: none;
+  }
+  nav a:hover { text-decoration: underline; }
+  main { max-width: 1280px; margin: 0 auto; padding: 28px 36px 60px; }
+  section {
+    margin-bottom: 48px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 22px 26px;
+  }
+  section h2 {
+    margin: 0 0 6px;
+    font-size: 19px;
+    letter-spacing: -0.005em;
+  }
+  section .sub {
+    color: var(--muted); font-size: 13px;
+    margin-bottom: 18px;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 22px;
+  }
+  @media (max-width: 880px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+  .controls {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 13px;
+  }
+  .controls .row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+  }
+  .controls .row:last-child { margin-bottom: 0; }
+  .controls label {
+    width: 130px; color: var(--muted); flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .controls input[type=range] { flex: 1; }
+  .controls .val {
+    width: 48px; text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  .stage {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px;
+    overflow-x: auto;
+  }
+  canvas { display: block; max-width: 100%; height: auto; }
+  pre, code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12.5px;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 12px 14px;
+    overflow-x: auto;
+    margin: 10px 0 0;
+  }
+  code.inl {
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1px 6px;
+  }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 8px 14px;
+    font-size: 12px; color: var(--muted);
+    margin-top: 8px;
+  }
+  .legend .sw {
+    display: inline-block; width: 12px; height: 12px;
+    border-radius: 2px; vertical-align: middle; margin-right: 6px;
+  }
+  .narr {
+    font-size: 14px;
+  }
+  .narr p { margin: 0 0 10px; }
+  .narr ul { padding-left: 20px; margin: 0 0 10px; }
+  .pill {
+    display: inline-block;
+    background: #2a2f3a; color: var(--ink);
+    border-radius: 999px; padding: 1px 9px;
+    font-size: 11px; font-variant-numeric: tabular-nums;
+  }
+  .pill.warn { background: #4a3216; color: var(--warn); }
+  .pill.good { background: #1b3b1b; color: var(--good); }
+  .pill.bad  { background: #4a1b1b; color: var(--bad); }
+  .stat {
+    display: inline-block;
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    margin-right: 6px; margin-top: 6px;
+  }
+  .stat b { color: var(--accent); }
+  details {
+    margin-top: 12px;
+    border: 1px dashed var(--line);
+    border-radius: 6px;
+    padding: 10px 14px;
+    background: var(--code-bg);
+  }
+  details summary {
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .pidbox {
+    display: inline-block;
+    min-width: 30px;
+    height: 22px;
+    line-height: 22px;
+    text-align: center;
+    border-radius: 4px;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    margin: 2px;
+    color: #0b0d12;
+    font-weight: 600;
+  }
+  .modeToggle {
+    display: inline-flex;
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    overflow: hidden;
+    font-size: 12px;
+  }
+  .modeToggle button {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    padding: 5px 12px;
+    cursor: pointer;
+  }
+  .modeToggle button.active {
+    background: var(--accent);
+    color: #0b0d12;
+    font-weight: 600;
+  }
+  footer { color: var(--muted); font-size: 12px; padding: 0 36px 28px; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>remap_xcd &amp; pid_grid — interactive walkthrough</h1>
+  <div class="sub">
+    aiter/ops/triton/utils/_triton/pid_preprocessing.py · MI355X chiplet-aware PID remap
+    (HipKittens Algorithm 1, factored into two helpers)
+  </div>
+</header>
+
+<nav>
+  <a href="#why">1 · Why we remap</a>
+  <a href="#hw">2 · Default round-robin</a>
+  <a href="#remap_chunked">3 · remap_xcd_chunked (Phase 1)</a>
+  <a href="#remap_max">4 · remap_xcd (L2-greedy)</a>
+  <a href="#pid_grid">5 · pid_grid (Phase 2)</a>
+  <a href="#compose">6 · Composition (end-to-end)</a>
+  <a href="#pid_grid_3d">7 · pid_grid_3d</a>
+  <a href="#xcd-layout">8 · XCD layout</a>
+  <a href="#takeaways">9 · Takeaways</a>
+</nav>
+
+<main>
+
+<!-- ============================== SECTION 1 ============================== -->
+<section id="why">
+  <h2>1 · Why we remap PIDs at all</h2>
+  <div class="sub">MI355X = 8 XCDs × 32 CUs, each XCD owns a private 4 MB L2. Default HW scheduling fights you.</div>
+
+  <div class="grid-2">
+    <div class="narr">
+      <p>
+        On MI300/MI355, the GPU is built from 8 <b>XCDs</b> (Accelerator Complex Dies).
+        Each XCD has its own 4&nbsp;MB <b>L2 cache</b>; they all share an <b>LLC</b> that
+        sits between the L2s and HBM.
+      </p>
+      <ul>
+        <li><b>L2 wants</b> blocks on the <i>same</i> XCD to read overlapping data.</li>
+        <li><b>LLC wants</b> blocks on <i>different</i> XCDs to read overlapping data.</li>
+      </ul>
+      <p>
+        The hardware dispatches launch-order block IDs <code class="inl">round-robin</code>
+        across XCDs (block&nbsp;<i>k</i> → XCD&nbsp;<i>k</i>&nbsp;%&nbsp;8). Combined with a row-major
+        output-tile walk, this scatters each XCD's work across the whole output → measured
+        <b>55 % L2 hit rate</b> on a 9216³ BF16 GEMM (HK paper, Table 4).
+      </p>
+      <p>
+        <code class="inl">remap_xcd_chunked</code> and <code class="inl">pid_grid</code>
+        re-permute the launch-order block IDs <i>at the top of the kernel</i> to recover
+        spatial locality — no kernel-body changes, ~20 lines of integer math, up to
+        <b>+19 %</b> bandwidth.
+      </p>
+    </div>
+    <div class="stage">
+      <canvas id="cv-hier" width="540" height="320"></canvas>
+      <div class="legend">
+        <span><span class="sw" style="background:#2a2f3a"></span>HBM (off-chip)</span>
+        <span><span class="sw" style="background:#3b4252"></span>LLC (shared)</span>
+        <span><span class="sw" style="background:#7cc6ff"></span>Per-XCD L2 (private)</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SECTION 2 ============================== -->
+<section id="hw">
+  <h2>2 · The default — round-robin across XCDs</h2>
+  <div class="sub">Hardware policy: PID <i>p</i> → XCD <code class="inl">p % NUM_XCDS</code>. Laid on the 2-D output-tile grid, the colours stripe diagonally.</div>
+
+  <div class="grid-2">
+    <div>
+      <div class="controls">
+        <div class="row">
+          <label>NUM_XCDS</label>
+          <input id="hw-nxcd" type="range" min="2" max="8" step="1" value="8" />
+          <div class="val" id="hw-nxcd-v">8</div>
+        </div>
+        <div class="row">
+          <label>num_pid_m</label>
+          <input id="hw-m" type="range" min="4" max="16" step="1" value="8" />
+          <div class="val" id="hw-m-v">8</div>
+        </div>
+        <div class="row">
+          <label>num_pid_n</label>
+          <input id="hw-n" type="range" min="4" max="16" step="1" value="8" />
+          <div class="val" id="hw-n-v">8</div>
+        </div>
+      </div>
+      <div class="narr" style="margin-top:14px">
+        <p>
+          The grid is the <b>2-D output-tile space</b>: row = <i>pid_m</i>, col = <i>pid_n</i>,
+          and the cell number is the linear PID <code class="inl">m·N + n</code>. Cell colour =
+          the XCD that PID gets dispatched to under the default round-robin.
+        </p>
+        <p>
+          Pick any XCD colour and trace it: cells of the same colour land
+          on a <i>diagonal</i> stripe across the grid. Neither rows of A (a single
+          <i>pid_m</i> row) nor columns of B (a single <i>pid_n</i> column) end up
+          on a single XCD — that's the L2-locality problem the two helpers fix.
+        </p>
+      </div>
+    </div>
+    <div class="stage">
+      <canvas id="cv-hw" width="540" height="460"></canvas>
+      <div id="hw-stats"></div>
+      <div class="legend" id="hw-legend"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SECTION 3 ============================== -->
+<section id="remap_chunked">
+  <h2>3 · <code class="inl">remap_xcd_chunked</code> — Phase 1 (XCD grouping)</h2>
+  <div class="sub">Permute PIDs so CHUNK_SIZE consecutive logical blocks land on the same XCD.</div>
+
+  <div class="grid-2">
+    <div>
+      <div class="controls">
+        <div class="row">
+          <label>NUM_XCDS</label>
+          <input id="rc-nxcd" type="range" min="2" max="8" step="1" value="8" />
+          <div class="val" id="rc-nxcd-v">8</div>
+        </div>
+        <div class="row">
+          <label>CHUNK_SIZE</label>
+          <input id="rc-chunk" type="range" min="1" max="16" step="1" value="4" />
+          <div class="val" id="rc-chunk-v">4</div>
+        </div>
+        <div class="row">
+          <label>num_pid_m</label>
+          <input id="rc-m" type="range" min="4" max="16" step="1" value="8" />
+          <div class="val" id="rc-m-v">8</div>
+        </div>
+        <div class="row">
+          <label>num_pid_n</label>
+          <input id="rc-n" type="range" min="4" max="16" step="1" value="8" />
+          <div class="val" id="rc-n-v">8</div>
+        </div>
+        <div class="row">
+          <label>Inspect HW PID</label>
+          <input id="rc-pid" type="range" min="0" max="63" step="1" value="10" />
+          <div class="val" id="rc-pid-v">10</div>
+        </div>
+      </div>
+      <div class="narr" style="margin-top:14px">
+        <p>
+          Both grids are the <b>2-D output-tile space</b> (rows = <i>pid_m</i>, cols = <i>pid_n</i>).
+          <b>Top:</b> default round-robin — cell colour = <code class="inl">(m·N + n) % NUM_XCDS</code>.
+          <b>Bottom:</b> the same tiles after applying <code class="inl">remap_xcd_chunked</code>
+          to the launch order — cell colour = the XCD that actually runs that tile.
+        </p>
+        <p>
+          Watch <b>contiguous chunks of CHUNK_SIZE cells share an XCD colour</b> in the bottom grid.
+          Those chunks live on a single row → the row of A they all need is loaded into that XCD's
+          L2 exactly once.
+        </p>
+        <p style="color:var(--muted);font-size:13px">
+          The <i>Inspect PID</i> slider doubles as a step counter — tiles labelled
+          ≤ <i>Inspect</i> stay bright, the rest fade to show the prefix that has run so far.
+          The white-bordered cell is the inspected tile in both grids (same label,
+          different XCD colour).
+        </p>
+      </div>
+      <details>
+        <summary>Show the per-PID math</summary>
+        <pre id="rc-math"></pre>
+      </details>
+      <details>
+        <summary>Show the kernel code (pid_preprocessing.py)</summary>
+<pre>@triton.jit
+def remap_xcd_chunked(pid, GRID_MN,
+                     NUM_XCDS: tl.constexpr = 8,
+                     CHUNK_SIZE: tl.constexpr = 2):
+    xcd = pid % NUM_XCDS
+    if pid &gt; (GRID_MN // (NUM_XCDS * CHUNK_SIZE)) * (NUM_XCDS * CHUNK_SIZE):
+        return pid                              # tail-guard
+    local_pid    = pid // NUM_XCDS
+    chunk_idx    = local_pid // CHUNK_SIZE
+    pos_in_chunk = local_pid %  CHUNK_SIZE
+    return chunk_idx * NUM_XCDS * CHUNK_SIZE
+         + xcd * CHUNK_SIZE
+         + pos_in_chunk</pre>
+      </details>
+    </div>
+
+    <div class="stage">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px">
+        <b>Before</b> — default round-robin on the 2-D tile grid
+      </div>
+      <canvas id="cv-rc-in" width="540" height="260"></canvas>
+      <div style="font-size:12px;color:var(--muted);margin:12px 0 6px">
+        <b>After</b> <code class="inl">remap_xcd_chunked</code> — XCD that actually runs each tile. Big number = tile id; small <code class="inl">←q</code> = HW dispatch ID <code class="inl">q</code> whose <code class="inl">remap_xcd_chunked(q)</code> equals this tile (e.g. for chunk=4,&nbsp;NXCD=8 the row that contains tiles 0,1,2,3 is fed by HW IDs 0,8,16,24 — all on XCD 0).
+      </div>
+      <canvas id="cv-rc-out" width="540" height="260"></canvas>
+      <div style="font-size:12px;color:var(--muted);margin:12px 0 6px">
+        <b>Per-XCD work queue</b> — each column = one XCD, top→bottom = HW dispatch order. Each cell shows <code class="inl">p_hw → new_pid</code> = <code class="inl">remap_xcd_chunked(p_hw)</code>; brackets mark <code class="inl">chunk_idx</code> runs.
+      </div>
+      <canvas id="cv-rc-lanes" width="540" height="240"></canvas>
+      <div id="rc-stats" style="margin-top:8px"></div>
+      <div class="legend" id="rc-legend"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SECTION 4 ============================== -->
+<section id="remap_max">
+  <h2>4 · <code class="inl">remap_xcd</code> — the L2-greedy extreme</h2>
+  <div class="sub">No CHUNK_SIZE knob: each XCD gets one giant contiguous run. The HipKittens paper warns this is usually <i>slower than the baseline</i>.</div>
+
+  <div class="grid-2">
+    <div>
+      <div class="controls">
+        <div class="row">
+          <label>NUM_XCDS</label>
+          <input id="rm-nxcd" type="range" min="2" max="8" step="1" value="8" />
+          <div class="val" id="rm-nxcd-v">8</div>
+        </div>
+        <div class="row">
+          <label>num_pid_m</label>
+          <input id="rm-m" type="range" min="4" max="16" step="1" value="8" />
+          <div class="val" id="rm-m-v">8</div>
+        </div>
+        <div class="row">
+          <label>num_pid_n</label>
+          <input id="rm-n" type="range" min="4" max="16" step="1" value="8" />
+          <div class="val" id="rm-n-v">8</div>
+        </div>
+      </div>
+      <div class="narr" style="margin-top:14px">
+        <p>
+          This is <code class="inl">remap_xcd_chunked</code> with <code class="inl">CHUNK_SIZE = ceil(GRID_MN / NUM_XCDS)</code>.
+          The kernel handles uneven division by giving the first <span class="pill">tall_xcds</span>
+          XCDs one extra block.
+        </p>
+        <p>
+          <span class="pill warn">trap</span> Maximising L2 hit rate alone usually
+          <i>hurts</i> bandwidth, because all the inter-XCD reuse that would have
+          landed in LLC now misses to HBM. Paper measured 14.9 TB/s here vs 15.1 TB/s
+          for the naive baseline and 18.3 TB/s for a balanced (W=5, C=25).
+        </p>
+      </div>
+    </div>
+    <div class="stage">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px">
+        2-D output-tile grid — colour = XCD that runs each tile under <code class="inl">remap_xcd</code>
+      </div>
+      <canvas id="cv-rm" width="540" height="460"></canvas>
+      <div style="font-size:12px;color:var(--muted);margin:12px 0 6px">
+        <b>Per-XCD work queue</b> — each column = one XCD's contiguous block of logical PIDs (L2-greedy: no chunk substructure).
+      </div>
+      <canvas id="cv-rm-lanes" width="540" height="260"></canvas>
+      <div id="rm-stats" style="margin-top:8px"></div>
+      <div class="legend" id="rm-legend"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SECTION 5 ============================== -->
+<section id="pid_grid">
+  <h2>5 · <code class="inl">pid_grid</code> — Phase 2 (hierarchical windowed traversal)</h2>
+  <div class="sub">Unpack 1-D PID → 2-D <code class="inl">(pid_m, pid_n)</code>, walking the output in vertical windows of height GROUP_SIZE_M instead of row-major.</div>
+
+  <div class="grid-2">
+    <div>
+      <div class="controls">
+        <div class="row">
+          <label>num_pid_m</label>
+          <input id="pg-m" type="range" min="2" max="16" step="1" value="8" />
+          <div class="val" id="pg-m-v">8</div>
+        </div>
+        <div class="row">
+          <label>num_pid_n</label>
+          <input id="pg-n" type="range" min="2" max="16" step="1" value="8" />
+          <div class="val" id="pg-n-v">8</div>
+        </div>
+        <div class="row">
+          <label>GROUP_SIZE_M</label>
+          <input id="pg-g" type="range" min="1" max="8" step="1" value="4" />
+          <div class="val" id="pg-g-v">4</div>
+        </div>
+        <div class="row">
+          <label>Step PID</label>
+          <input id="pg-step" type="range" min="0" max="63" step="1" value="63" />
+          <div class="val" id="pg-step-v">63</div>
+        </div>
+      </div>
+      <div class="narr" style="margin-top:14px">
+        <p>
+          The grid is the <b>output-tile space</b> of a GEMM (rows = M tiles, cols = N tiles).
+          Each cell shows the visit order, coloured by which window it belongs to.
+          Move the <i>Step PID</i> slider to watch the traversal trace itself.
+        </p>
+        <ul>
+          <li><b>GROUP_SIZE_M = 1</b> → degenerates to row-major.
+            Consecutive PIDs share a row of A but burn through all columns of B.</li>
+          <li><b>GROUP_SIZE_M = W</b> → each window of W PIDs reuses one row of A
+            <i>and</i> one column of B (2-D locality). What L2 wants.</li>
+          <li>HK paper sweet spot on 9216³: <span class="pill good">W = 5</span>.</li>
+        </ul>
+      </div>
+      <details>
+        <summary>Show the kernel code</summary>
+<pre>@triton.jit
+def pid_grid(pid, num_pid_m, num_pid_n,
+             GROUP_SIZE_M: tl.constexpr = 1):
+    if GROUP_SIZE_M == 1:
+        pid_m = pid // num_pid_n
+        pid_n = pid %  num_pid_n
+    else:
+        num_pid_in_group = GROUP_SIZE_M * num_pid_n
+        group_id         = pid // num_pid_in_group
+        first_pid_m      = group_id * GROUP_SIZE_M
+        group_size_m     = min(num_pid_m - first_pid_m, GROUP_SIZE_M)
+        pid_m = first_pid_m + (pid %  group_size_m)
+        pid_n = (pid % num_pid_in_group) // group_size_m
+    return pid_m, pid_n</pre>
+      </details>
+    </div>
+    <div class="stage">
+      <canvas id="cv-pg" width="540" height="540"></canvas>
+      <div style="font-size:12px;color:var(--muted);margin:12px 0 6px">
+        <b>Per-XCD work queue</b> (assuming default round-robin, no remap) — labels are <code class="inl">(m,n)</code>; brackets mark <code class="inl">group_id</code> windows.
+      </div>
+      <canvas id="cv-pg-lanes" width="540" height="260"></canvas>
+      <div class="legend" id="pg-legend"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SECTION 6 ============================== -->
+<section id="compose">
+  <h2>6 · Composition — what one XCD <i>actually</i> sees</h2>
+  <div class="sub">The same 2-D output grid, recoloured by which XCD ends up running each tile. Toggle phases on/off to see each one's contribution.</div>
+
+  <div class="grid-2">
+    <div>
+      <div class="controls">
+        <div class="row">
+          <label>num_pid_m</label>
+          <input id="cp-m" type="range" min="4" max="16" step="1" value="8" />
+          <div class="val" id="cp-m-v">8</div>
+        </div>
+        <div class="row">
+          <label>num_pid_n</label>
+          <input id="cp-n" type="range" min="4" max="16" step="1" value="8" />
+          <div class="val" id="cp-n-v">8</div>
+        </div>
+        <div class="row">
+          <label>NUM_XCDS</label>
+          <input id="cp-x" type="range" min="2" max="8" step="1" value="8" />
+          <div class="val" id="cp-x-v">8</div>
+        </div>
+        <div class="row">
+          <label>CHUNK_SIZE</label>
+          <input id="cp-c" type="range" min="1" max="16" step="1" value="4" />
+          <div class="val" id="cp-c-v">4</div>
+        </div>
+        <div class="row">
+          <label>GROUP_SIZE_M</label>
+          <input id="cp-g" type="range" min="1" max="8" step="1" value="4" />
+          <div class="val" id="cp-g-v">4</div>
+        </div>
+        <div class="row">
+          <label>Phase 1 (remap_xcd_chunked)</label>
+          <span class="modeToggle">
+            <button id="cp-p1-off" class="">off</button>
+            <button id="cp-p1-on" class="active">on</button>
+          </span>
+        </div>
+        <div class="row">
+          <label>Phase 2 (pid_grid window)</label>
+          <span class="modeToggle">
+            <button id="cp-p2-off" class="">off</button>
+            <button id="cp-p2-on" class="active">on</button>
+          </span>
+        </div>
+      </div>
+      <div class="narr" style="margin-top:14px">
+        <p>
+          Each output cell is the colour of its assigned XCD. The toolbox value
+          is <i>cluster compactness</i> per XCD — the area of the bounding box of
+          tiles routed to each XCD, summed and normalized. <b>Lower is better</b>:
+          a compact bounding box means tiles share row/column data → L2 hits.
+        </p>
+        <ul>
+          <li><b>Both off</b> = naive scatter. Every XCD's cells are spread across the whole grid.</li>
+          <li><b>Phase 1 only</b> = chunked PIDs but row-major walk → stripes per XCD.</li>
+          <li><b>Phase 2 only</b> = nice 2-D windows but they're still scattered across XCDs.</li>
+          <li><b>Both on</b> = each XCD owns a small rectangle of tiles.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="stage">
+      <canvas id="cv-cp" width="540" height="540"></canvas>
+      <div id="cp-stats" style="margin-top:8px"></div>
+      <div class="legend" id="cp-legend"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SECTION 7 ============================== -->
+<section id="pid_grid_3d">
+  <h2>7 · <code class="inl">pid_grid_3d</code> — the split-K helper (no chiplet awareness)</h2>
+  <div class="sub">Unflattens 1-D PID to (m, n, k). No XCD remap, no windowing. Worth flagging for sparse-MLA 3D split-K work.</div>
+
+  <div class="grid-2">
+    <div>
+      <div class="controls">
+        <div class="row">
+          <label>num_pid_m</label>
+          <input id="p3-m" type="range" min="2" max="8" step="1" value="4" />
+          <div class="val" id="p3-m-v">4</div>
+        </div>
+        <div class="row">
+          <label>num_pid_n</label>
+          <input id="p3-n" type="range" min="2" max="8" step="1" value="4" />
+          <div class="val" id="p3-n-v">4</div>
+        </div>
+        <div class="row">
+          <label>num_pid_k</label>
+          <input id="p3-k" type="range" min="1" max="6" step="1" value="3" />
+          <div class="val" id="p3-k-v">3</div>
+        </div>
+        <div class="row">
+          <label>Inspect PID</label>
+          <input id="p3-pid" type="range" min="0" max="47" step="1" value="0" />
+          <div class="val" id="p3-pid-v">0</div>
+        </div>
+      </div>
+      <div class="narr" style="margin-top:14px">
+        <p>
+          The K dimension iterates <i>slowest</i> here: PIDs 0..M·N−1 visit
+          the first K-slice in row-major order, then the next slice, etc.
+        </p>
+        <p>
+          For low-batch sparse-MLA decode, the MN slice can fragment badly across
+          XCDs because no remap is applied. A worthwhile experiment: apply
+          <code class="inl">remap_xcd_chunked + pid_grid</code> on the MN portion
+          before unpacking K (see <a href="https://hazyresearch.stanford.edu/blog/2025-11-09-hk">HK blog</a>).
+        </p>
+      </div>
+    </div>
+    <div class="stage">
+      <canvas id="cv-p3" width="540" height="420"></canvas>
+      <div style="font-size:12px;color:var(--muted);margin:12px 0 6px">
+        <b>Per-XCD work queue</b> (default round-robin) — labels are <code class="inl">(m,n,k)</code>; cell colour = k-slab.
+      </div>
+      <canvas id="cv-p3-lanes" width="540" height="260"></canvas>
+      <div id="p3-stats" style="margin-top:8px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SECTION 8 ============================== -->
+<section id="xcd-layout">
+  <h2>8 · XCD layout — horizontal lanes, one per XCD</h2>
+  <div class="sub">Flip the view: <i>columns</i> are XCDs, rows inside each column are the HW dispatch order. Lets you read each function's per-XCD work queue at a glance.</div>
+
+  <div class="grid-2">
+    <div>
+      <div class="controls">
+        <div class="row" id="xl-fn-row">
+          <label>Function</label>
+          <select id="xl-fn" style="flex:1;background:var(--panel);color:var(--ink);border:1px solid var(--line);padding:5px 6px;border-radius:6px;font-family:inherit;font-size:13px">
+            <option value="default">default (no remap)</option>
+            <option value="rcc" selected>remap_xcd_chunked</option>
+            <option value="rm">remap_xcd</option>
+            <option value="pg">pid_grid (with default round-robin)</option>
+            <option value="p3d">pid_grid_3d (with default round-robin)</option>
+          </select>
+        </div>
+        <div class="row">
+          <label>NUM_XCDS</label>
+          <input id="xl-nxcd" type="range" min="2" max="8" step="1" value="8" />
+          <div class="val" id="xl-nxcd-v">8</div>
+        </div>
+        <div class="row">
+          <label>num_pid_m</label>
+          <input id="xl-m" type="range" min="2" max="12" step="1" value="6" />
+          <div class="val" id="xl-m-v">6</div>
+        </div>
+        <div class="row">
+          <label>num_pid_n</label>
+          <input id="xl-n" type="range" min="2" max="12" step="1" value="6" />
+          <div class="val" id="xl-n-v">6</div>
+        </div>
+        <div class="row" id="xl-chunk-row">
+          <label>CHUNK_SIZE</label>
+          <input id="xl-chunk" type="range" min="1" max="12" step="1" value="3" />
+          <div class="val" id="xl-chunk-v">3</div>
+        </div>
+        <div class="row" id="xl-g-row">
+          <label>GROUP_SIZE_M</label>
+          <input id="xl-g" type="range" min="1" max="6" step="1" value="3" />
+          <div class="val" id="xl-g-v">3</div>
+        </div>
+        <div class="row" id="xl-k-row">
+          <label>num_pid_k</label>
+          <input id="xl-k" type="range" min="1" max="4" step="1" value="2" />
+          <div class="val" id="xl-k-v">2</div>
+        </div>
+      </div>
+      <div class="narr" style="margin-top:14px">
+        <p>
+          Each <b>column</b> is one XCD's HW work queue, top-to-bottom in dispatch
+          order. Cell labels depend on the function: <code class="inl">pid</code> for
+          the raw remaps, <code class="inl">(m,n)</code> for <code class="inl">pid_grid</code>,
+          <code class="inl">(m,n,k)</code> for <code class="inl">pid_grid_3d</code>.
+        </p>
+        <p>
+          Same physical compute, very different per-XCD shape:
+        </p>
+        <ul>
+          <li><b>default</b>: lane <i>i</i> holds PIDs <i>i, i+N, i+2N, …</i> — sparse spacing.</li>
+          <li><b>remap_xcd_chunked</b>: each lane is stacks of CHUNK consecutive logical PIDs.</li>
+          <li><b>remap_xcd</b>: one giant contiguous block per lane (L2-greedy extreme).</li>
+          <li><b>pid_grid</b>: lane cells become <code class="inl">(m,n)</code> coords; with W &gt; 1 the same lane visits multiple rows of the same window.</li>
+          <li><b>pid_grid_3d</b>: cells coloured by k-slab — lanes interleave K, no chiplet awareness.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="stage">
+      <canvas id="cv-xl" width="540" height="520"></canvas>
+      <div id="xl-stats" style="margin-top:8px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SECTION 9 ============================== -->
+<section id="takeaways">
+  <h2>9 · Takeaways</h2>
+  <div class="narr">
+    <ul>
+      <li><b>Both helpers are HipKittens Algorithm&nbsp;1.</b>
+          <code class="inl">remap_xcd_chunked</code> = Phase 1 (XCD grouping, knob <i>C</i>),
+          <code class="inl">pid_grid</code> = Phase 2 (windowed traversal, knob <i>W</i>=GROUP_SIZE_M).
+          Factored as two composable helpers rather than one fused remap — strictly more flexible,
+          but the caller has to remember to apply both.</li>
+      <li><b><code class="inl">remap_xcd</code> = the L2-greedy trap.</b> HK paper explicitly warns
+          this configuration costs bandwidth vs the naive baseline. Use the chunked variant and tune <i>C</i>.</li>
+      <li><b>The defaults in this file are conservative</b> (<i>C=2, W=1</i> = essentially row-major).
+          Meant to be overridden per-kernel/per-shape — wrong defaults silently regress.</li>
+      <li><b>The 3-D split-K path skips chiplet awareness entirely.</b> Likely a missed lever
+          for low-batch sparse-MLA decode where MN scatters across XCDs by default.</li>
+      <li><b>Pick (W, C) per shape, not globally.</b> Paper's sweet spots differ across problem
+          sizes (9216³ wants C=25, 14592³ wants C=64). Always target the bandwidth column, not
+          the L2-hit-rate column.</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Source: <code class="inl">aiter/ops/triton/utils/_triton/pid_preprocessing.py</code> ·
+  HipKittens paper: <a href="https://arxiv.org/abs/2511.08083">arXiv 2511.08083</a> ·
+  HipKittens blog: <a href="https://hazyresearch.stanford.edu/blog/2025-11-09-hk">hazyresearch.stanford.edu</a> ·
+  Companion note: <code class="inl">chiplet-xcd-remap.md</code>
+</footer>
+
+<script>
+// ---------- palette: distinct XCD colours ----------
+const XCD_COLORS = [
+  "#7cc6ff", // blue
+  "#ff7b7b", // red
+  "#8fd987", // green
+  "#ffb86b", // orange
+  "#c792ea", // purple
+  "#ffd866", // yellow
+  "#82e9de", // teal
+  "#f48fb1", // pink
+];
+const MUTED = "#9aa1ad";
+const PANEL = "#1e222b";
+const LINE  = "#2a2f3a";
+const INK   = "#e6e7ea";
+
+function xcdColor(i) { return XCD_COLORS[i % XCD_COLORS.length]; }
+
+// ---------- HiDPI prep: upgrade canvas backing store by devicePixelRatio ----------
+function prepCanvas(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  if (!canvas._dpiReady) {
+    const cssW = canvas.width;
+    const cssH = canvas.height;
+    canvas.style.width = cssW + "px";   // height kept auto so CSS max-width:100% preserves aspect
+    canvas.width  = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    canvas._cssW = cssW;
+    canvas._cssH = cssH;
+    canvas._dpiReady = true;
+  }
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w: canvas._cssW, h: canvas._cssH };
+}
+
+// ---------- 2-D grid renderer used by sections 2, 3, 4, 6 ----------
+function drawGrid2D(canvas, M, N, cellFn, opts) {
+  opts = opts || {};
+  const { ctx, w: W, h: H } = prepCanvas(canvas);
+  ctx.clearRect(0, 0, W, H);
+  const padL = 28, padT = 22, padR = 8, padB = 8;
+  const cellW = (W - padL - padR) / N;
+  const cellH = (H - padT - padB) / M;
+  ctx.font = "10px ui-monospace, monospace";
+  // column headers (pid_n)
+  ctx.fillStyle = MUTED;
+  for (let n = 0; n < N; n++) {
+    if (cellW >= 14) ctx.fillText(String(n), padL + n*cellW + cellW/2 - 3, padT - 6);
+  }
+  // row headers (pid_m)
+  for (let m = 0; m < M; m++) {
+    if (cellH >= 12) ctx.fillText(String(m), padL - 16, padT + m*cellH + cellH/2 + 4);
+  }
+  // axis labels
+  if (opts.axisLabels !== false) {
+    ctx.fillStyle = MUTED;
+    ctx.fillText("n →", padL + 2, padT - 6);
+    ctx.save();
+    ctx.translate(padL - 18, padT + 2);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillText("← m", 0, 0);
+    ctx.restore();
+  }
+  // cells
+  for (let m = 0; m < M; m++) {
+    for (let n = 0; n < N; n++) {
+      const info = cellFn(m, n) || {};
+      const x = padL + n*cellW, y = padT + m*cellH;
+      ctx.globalAlpha = info.alpha !== undefined ? info.alpha : 1;
+      ctx.fillStyle = info.color || "#333";
+      ctx.fillRect(x+1, y+1, cellW-2, cellH-2);
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = info.highlight ? "#fff" : LINE;
+      ctx.lineWidth = info.highlight ? 2 : 1;
+      ctx.strokeRect(x+0.5, y+0.5, cellW, cellH);
+      ctx.lineWidth = 1;
+      if (info.label !== undefined && info.label !== null && cellW >= 18 && cellH >= 14) {
+        ctx.fillStyle = "#0b0d12";
+        const fs = Math.max(8, Math.min(11, Math.floor(cellH/2.4)));
+        ctx.font = `${fs}px ui-monospace, monospace`;
+        const lbl = String(info.label);
+        const hasSub = info.sublabel !== undefined && info.sublabel !== null && cellH >= 22;
+        const yMain = hasSub ? y + cellH/2 - 1 : y + cellH/2 + fs/3;
+        ctx.fillText(lbl, x + cellW/2 - lbl.length*fs*0.3, yMain);
+        if (hasSub) {
+          const sfs = Math.max(7, fs - 2);
+          ctx.font = `${sfs}px ui-monospace, monospace`;
+          ctx.fillStyle = "rgba(11,13,18,0.72)";
+          const slbl = String(info.sublabel);
+          ctx.fillText(slbl, x + cellW/2 - slbl.length*sfs*0.3, y + cellH/2 + sfs + 2);
+        }
+      }
+    }
+  }
+}
+
+// ---------- horizontal XCD-lane renderer (used by sections 3, 4, 5, 7, 8) ----------
+// lanes: NXCD-length array; each entry is array of cells { label, groupKey?, colorKey?, alpha?, highlight? }
+// opts: { groupTag?: "c"|"g"|null, title?: string }
+function drawXcdLanes(canvas, lanes, opts) {
+  opts = opts || {};
+  const groupTag = opts.groupTag || null;
+  const NXCD = lanes.length;
+  const { ctx, w: W, h: H } = prepCanvas(canvas);
+  ctx.clearRect(0, 0, W, H);
+  const padL = 6, padR = 6, headerH = 20, padT = headerH + 4, padB = 4;
+  const laneW = (W - padL - padR) / NXCD;
+  const maxLen = Math.max(1, ...lanes.map(l => l.length));
+  const cellH = Math.max(8, Math.min(24, (H - padT - padB) / maxLen));
+
+  for (let x = 0; x < NXCD; x++) {
+    const lx = padL + x * laneW;
+    ctx.fillStyle = xcdColor(x);
+    ctx.fillRect(lx + 2, 3, laneW - 4, headerH - 6);
+    ctx.fillStyle = "#0b0d12";
+    ctx.font = "bold 10px ui-monospace, monospace";
+    const hdr = `XCD ${x}`;
+    ctx.fillText(hdr, lx + laneW/2 - hdr.length*3, 3 + (headerH-6)/2 + 4);
+  }
+
+  for (let x = 0; x < NXCD; x++) {
+    const lx = padL + x * laneW;
+    // run-index per cell (consecutive same-groupKey)
+    let runIdx = -1, prevKey = NaN;
+    for (let i = 0; i < lanes[x].length; i++) {
+      const k = lanes[x][i].groupKey !== undefined ? lanes[x][i].groupKey : -1;
+      if (k !== prevKey) { runIdx++; prevKey = k; }
+      lanes[x][i].runIdx = runIdx;
+    }
+    for (let i = 0; i < lanes[x].length; i++) {
+      const cell = lanes[x][i];
+      const cy = padT + i * cellH;
+      const baseAlpha = cell.alpha !== undefined ? cell.alpha : 0.8;
+      ctx.globalAlpha = baseAlpha;
+      ctx.fillStyle = xcdColor(cell.colorKey !== undefined ? cell.colorKey : x);
+      ctx.fillRect(lx + 2, cy, laneW - 4, cellH - 1);
+      if (groupTag && cell.groupKey >= 0 && (cell.runIdx % 2 === 1)) {
+        ctx.globalAlpha = 0.22 * baseAlpha;
+        ctx.fillStyle = "#0b0d12";
+        ctx.fillRect(lx + 2, cy, laneW - 4, cellH - 1);
+      }
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = cell.highlight ? "#fff" : LINE;
+      ctx.lineWidth = cell.highlight ? 2 : 1;
+      ctx.strokeRect(lx + 2 + 0.5, cy + 0.5, laneW - 4, cellH - 1);
+      ctx.lineWidth = 1;
+      if (cellH >= 11 && laneW >= 28 && cell.label !== undefined) {
+        ctx.fillStyle = "#0b0d12";
+        const fs = Math.max(8, Math.min(11, Math.floor(cellH * 0.55)));
+        ctx.font = `${fs}px ui-monospace, monospace`;
+        const lbl = String(cell.label);
+        ctx.fillText(lbl, lx + laneW/2 - lbl.length*fs*0.3, cy + cellH/2 + fs/3);
+      }
+    }
+    if (groupTag) {
+      let runStart = 0;
+      for (let i = 1; i <= lanes[x].length; i++) {
+        const at_end = i === lanes[x].length;
+        const boundary = at_end || lanes[x][i].groupKey !== lanes[x][i-1].groupKey;
+        if (boundary) {
+          const cell = lanes[x][runStart];
+          if (cell.groupKey >= 0) {
+            const y0 = padT + runStart * cellH;
+            const y1 = padT + i * cellH - 1;
+            ctx.strokeStyle = "#0b0d12";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(lx + 2 + 1, y0 + 1, laneW - 6, y1 - y0 - 2);
+            ctx.lineWidth = 1;
+            if (cellH >= 16 && laneW >= 38) {
+              const tag = `${groupTag}${cell.groupKey}`;
+              ctx.font = "bold 8px ui-monospace, monospace";
+              const tw = tag.length * 4.8 + 4;
+              ctx.fillStyle = "rgba(11,13,18,0.78)";
+              ctx.fillRect(lx + laneW - 4 - tw, y0 + 1, tw, 10);
+              ctx.fillStyle = "#f4f6fa";
+              ctx.fillText(tag, lx + laneW - 4 - tw + 2, y0 + 9);
+            }
+          }
+          runStart = i;
+        }
+      }
+    }
+  }
+}
+
+function bind(id, cb) {
+  const el = document.getElementById(id);
+  const v  = document.getElementById(id + "-v");
+  const handler = () => { if (v) v.textContent = el.value; cb(parseInt(el.value)); };
+  el.addEventListener("input", handler);
+  handler();
+}
+
+function setText(id, t) { document.getElementById(id).textContent = t; }
+
+// ---------- 1: memory hierarchy diagram ----------
+(function drawHier() {
+  const c = document.getElementById("cv-hier");
+  const { ctx, w: W, h: H } = prepCanvas(c);
+  ctx.clearRect(0,0,W,H);
+  // HBM
+  ctx.fillStyle = "#2a2f3a";
+  ctx.fillRect(40, 250, W-80, 40);
+  ctx.fillStyle = INK; ctx.font = "12px sans-serif";
+  ctx.fillText("HBM — 288 GB", 50, 275);
+
+  // LLC
+  ctx.fillStyle = "#3b4252";
+  ctx.fillRect(40, 190, W-80, 32);
+  ctx.fillStyle = INK;
+  ctx.fillText("LLC (shared by all XCDs)", 50, 211);
+
+  // 8 XCDs
+  const n = 8, gap = 6;
+  const totalW = W-80;
+  const cellW = (totalW - gap*(n-1)) / n;
+  for (let i=0;i<n;i++) {
+    const x = 40 + i*(cellW+gap);
+    ctx.fillStyle = xcdColor(i);
+    ctx.globalAlpha = 0.85;
+    ctx.fillRect(x, 60, cellW, 110);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#0b0d12";
+    ctx.font = "11px sans-serif";
+    ctx.fillText("XCD "+i, x+8, 76);
+    ctx.fillText("L2 4MB", x+8, 92);
+    ctx.fillText("32 CUs", x+8, 108);
+  }
+
+  // arrows
+  ctx.strokeStyle = MUTED;
+  ctx.lineWidth = 1;
+  for (let i=0;i<n;i++) {
+    const x = 40 + i*(cellW+gap) + cellW/2;
+    ctx.beginPath();
+    ctx.moveTo(x, 170);
+    ctx.lineTo(x, 190);
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.moveTo(W/2, 222);
+  ctx.lineTo(W/2, 250);
+  ctx.stroke();
+
+  // title
+  ctx.fillStyle = INK; ctx.font = "13px sans-serif";
+  ctx.fillText("MI355X memory hierarchy", 40, 40);
+})();
+
+// ---------- 2: hardware default scheduling (2-D MN view) ----------
+let HW = { NXCD: 8, M: 8, N: 8 };
+function renderHW() {
+  drawGrid2D(document.getElementById("cv-hw"), HW.M, HW.N, (m, n) => {
+    const pid = m * HW.N + n;
+    return { color: xcdColor(pid % HW.NXCD), label: pid };
+  });
+  const leg = document.getElementById("hw-legend");
+  leg.innerHTML = "";
+  for (let i=0;i<HW.NXCD;i++) {
+    leg.innerHTML += `<span><span class="sw" style="background:${xcdColor(i)}"></span>XCD ${i}</span>`;
+  }
+  const total = HW.M * HW.N;
+  document.getElementById("hw-stats").innerHTML =
+    `<span class="stat">GRID_MN = M·N = <b>${total}</b></span>
+     <span class="stat">PIDs per XCD ≈ <b>${Math.ceil(total/HW.NXCD)}</b></span>
+     <span class="stat">spacing per XCD: every <b>${HW.NXCD}</b> PIDs</span>
+     <span class="stat bad">no row/column locality on any XCD</span>`;
+}
+bind("hw-nxcd", v => { HW.NXCD = v; renderHW(); });
+bind("hw-m",    v => { HW.M    = v; renderHW(); });
+bind("hw-n",    v => { HW.N    = v; renderHW(); });
+renderHW();
+
+// ---------- 3: remap_xcd_chunked ----------
+function remapXcdChunked(pid, GRID_MN, NUM_XCDS, CHUNK_SIZE) {
+  const xcd = pid % NUM_XCDS;
+  const tailThreshold = Math.floor(GRID_MN / (NUM_XCDS * CHUNK_SIZE)) * (NUM_XCDS * CHUNK_SIZE);
+  if (pid > tailThreshold) return pid;
+  const local_pid = Math.floor(pid / NUM_XCDS);
+  const chunk_idx = Math.floor(local_pid / CHUNK_SIZE);
+  const pos_in_chunk = local_pid % CHUNK_SIZE;
+  return chunk_idx * NUM_XCDS * CHUNK_SIZE + xcd * CHUNK_SIZE + pos_in_chunk;
+}
+
+let RC = { NXCD: 8, CHUNK: 4, M: 8, N: 8, PID: 10 };
+function renderRC() {
+  const total = RC.M * RC.N;
+  document.getElementById("rc-pid").max = total - 1;
+  if (RC.PID >= total) { RC.PID = total - 1; document.getElementById("rc-pid").value = RC.PID; document.getElementById("rc-pid-v").textContent = RC.PID; }
+
+  // For each HW PID p_hw, the kernel works on logical tile lp = remap(p_hw).
+  // xcdOfTile[lp] = p_hw % NXCD  (the XCD that actually runs that tile).
+  // hwOfTile[lp]  = p_hw         (the HW dispatch ID that produces that tile).
+  const xcdOfTile = new Array(total).fill(-1);
+  const hwOfTile  = new Array(total).fill(-1);
+  for (let p_hw = 0; p_hw < total; p_hw++) {
+    const lp = remapXcdChunked(p_hw, total, RC.NXCD, RC.CHUNK);
+    if (lp < 0 || lp >= total) continue;
+    xcdOfTile[lp] = p_hw % RC.NXCD;
+    hwOfTile[lp]  = p_hw;
+  }
+
+  // Inspect = HW dispatch ID being tracked. BEFORE highlights its launch position;
+  // AFTER highlights where remap_xcd_chunked sends it (= remap(insp)).
+  const insp = RC.PID;
+  const hl_m = Math.floor(insp / RC.N);
+  const hl_n = insp % RC.N;
+  const insp_lp = remapXcdChunked(insp, total, RC.NXCD, RC.CHUNK);
+  const hl_m_after = Math.floor(insp_lp / RC.N);
+  const hl_n_after = insp_lp % RC.N;
+
+  // BEFORE: cell label = pid; default colour = pid % NXCD
+  drawGrid2D(document.getElementById("cv-rc-in"), RC.M, RC.N, (m, n) => {
+    const pid = m * RC.N + n;
+    return {
+      color: xcdColor(pid % RC.NXCD),
+      label: pid,
+      alpha: pid <= insp ? 0.95 : 0.18,
+      highlight: (m === hl_m && n === hl_n),
+    };
+  });
+  // AFTER: cell label = pid (tile id); sublabel = ←p_hw (HW dispatch that produced it);
+  // colour = xcdOfTile[pid]. Trail = tiles whose HW pid ≤ insp (the dispatch order
+  // walking up to the inspected pid). Highlight box = the single remapped destination.
+  drawGrid2D(document.getElementById("cv-rc-out"), RC.M, RC.N, (m, n) => {
+    const pid = m * RC.N + n;
+    const xcd = xcdOfTile[pid];
+    const hw  = hwOfTile[pid];
+    const visited = hw >= 0 && hw <= insp;
+    return {
+      color: xcd >= 0 ? xcdColor(xcd) : "#444",
+      label: pid,
+      sublabel: hw >= 0 ? `←${hw}` : null,
+      alpha: visited ? 0.95 : 0.18,
+      highlight: (m === hl_m_after && n === hl_n_after),
+    };
+  });
+
+  const leg = document.getElementById("rc-legend");
+  leg.innerHTML = "";
+  for (let i=0;i<RC.NXCD;i++) leg.innerHTML += `<span><span class="sw" style="background:${xcdColor(i)}"></span>XCD ${i}</span>`;
+
+  // Per-XCD lane view: each lane = one XCD's HW work queue, label = logical PID
+  // post-remap, groupKey = chunk_idx (or -1 for tail PIDs).
+  const rcLanes = Array.from({length: RC.NXCD}, () => []);
+  {
+    const NC_ = RC.NXCD * RC.CHUNK;
+    const tThresh = Math.floor(total / NC_) * NC_;
+    for (let p_hw = 0; p_hw < total; p_hw++) {
+      const xcd = p_hw % RC.NXCD;
+      const lp = remapXcdChunked(p_hw, total, RC.NXCD, RC.CHUNK);
+      const gk = p_hw > tThresh ? -1 : Math.floor((p_hw / RC.NXCD) / RC.CHUNK);
+      rcLanes[xcd].push({
+        label: `${p_hw}→${lp}`,
+        groupKey: gk,
+        alpha: p_hw <= insp ? 0.85 : 0.18,
+        highlight: p_hw === insp,
+      });
+    }
+  }
+  drawXcdLanes(document.getElementById("cv-rc-lanes"), rcLanes, { groupTag: "c" });
+
+  // We want the per-PID math to mirror the kernel verbatim (forward direction).
+  // So: derive the HW PID q whose remap_xcd_chunked(q) = inspected tile p (one
+  // line), then trace the kernel's forward arithmetic on q step-for-step.
+  const p = insp;
+  const NXCD = RC.NXCD, CHUNK = RC.CHUNK, NC = NXCD * CHUNK;
+  const tailThresh = Math.floor(total / NC) * NC;
+  const tail = p > tailThresh;
+  // q derivation (one-line inverse — only because remap is a permutation of base-NC layout):
+  const inv_chunk = Math.floor(p / NC);
+  const inv_xcd   = Math.floor(p / CHUNK) % NXCD;
+  const inv_pos   = p % CHUNK;
+  const hw_pid    = tail ? p : (inv_chunk * CHUNK + inv_pos) * NXCD + inv_xcd;
+  // Now run the kernel formula forward on q to mirror the source:
+  const q          = hw_pid;
+  const fwd_xcd    = q % NXCD;
+  const fwd_local  = Math.floor(q / NXCD);
+  const fwd_chunk  = Math.floor(fwd_local / CHUNK);
+  const fwd_pos    = fwd_local % CHUNK;
+  const fwd_new    = fwd_chunk * NC + fwd_xcd * CHUNK + fwd_pos;
+  const before_xcd = p % NXCD;
+  const after_xcd  = tail ? fwd_xcd : fwd_xcd;  // == xcdOfTile[p] in both cases
+
+  document.getElementById("rc-math").textContent =
+`Inspect tile = ${p}   (cell labelled '${p}', highlighted in both grids)
+  → row m = ${hl_m}, col n = ${hl_n}
+
+BEFORE  — no remap, kernel uses pid = tl.program_id(0):
+  XCD = pid % NUM_XCDS = ${p} % ${NXCD} = ${before_xcd}
+  → tile runs on XCD ${before_xcd}
+
+AFTER   — kernel uses pid = remap_xcd_chunked(tl.program_id(0)):
+  HW PID that lands on tile ${p} is  q = ${q}.
+${tail
+  ? `  (${p} > tail threshold ${tailThresh} — the kernel's early-return passthrough.)
+  XCD = q % NUM_XCDS = ${q} % ${NXCD} = ${fwd_xcd}`
+  : `  Run the kernel's forward formula on q = ${q} (verbatim from the source):
+    xcd          = q % NUM_XCDS         = ${q} % ${NXCD} = ${fwd_xcd}
+    local_pid    = q // NUM_XCDS        = ${q} // ${NXCD} = ${fwd_local}
+    chunk_idx    = local_pid // CHUNK   = ${fwd_local} // ${CHUNK} = ${fwd_chunk}
+    pos_in_chunk = local_pid %  CHUNK   = ${fwd_local} %  ${CHUNK} = ${fwd_pos}
+    new_pid      = chunk_idx*NXCD*CHUNK + xcd*CHUNK + pos_in_chunk
+                 = ${fwd_chunk}*${NC} + ${fwd_xcd}*${CHUNK} + ${fwd_pos}
+                 = ${fwd_new}   ${fwd_new === p ? '✓ (= inspected tile)' : '✗ MISMATCH'}
+  → tile runs on XCD ${fwd_xcd}  (= q % NUM_XCDS)`}
+
+Net: tile ${p} moved XCD ${before_xcd} → XCD ${after_xcd}${before_xcd === after_xcd ? '   (no change for this tile under current C)' : ''}`;
+
+  document.getElementById("rc-stats").innerHTML =
+    `<span class="stat">GRID_MN = M·N = <b>${total}</b></span>
+     <span class="stat">CHUNK_SIZE = <b>${RC.CHUNK}</b> consecutive logical PIDs per XCD</span>
+     <span class="stat good">L2 grouping: ${RC.CHUNK}-wide stripes</span>
+     ${tail ? '<span class="stat warn">tail PID — passthrough</span>' : ''}`;
+}
+bind("rc-nxcd",  v => { RC.NXCD  = v; renderRC(); });
+bind("rc-chunk", v => { RC.CHUNK = v; renderRC(); });
+bind("rc-m",     v => { RC.M     = v; renderRC(); });
+bind("rc-n",     v => { RC.N     = v; renderRC(); });
+bind("rc-pid",   v => { RC.PID   = v; renderRC(); });
+renderRC();
+
+// ---------- 4: remap_xcd (max chunk) ----------
+function remapXcd(pid, GRID_MN, NUM_XCDS) {
+  const pids_per_xcd = Math.floor((GRID_MN + NUM_XCDS - 1) / NUM_XCDS);
+  let tall_xcds = GRID_MN % NUM_XCDS;
+  if (tall_xcds === 0) tall_xcds = NUM_XCDS;
+  const xcd = pid % NUM_XCDS;
+  const local_pid = Math.floor(pid / NUM_XCDS);
+  if (xcd < tall_xcds) return xcd * pids_per_xcd + local_pid;
+  return tall_xcds * pids_per_xcd + (xcd - tall_xcds) * (pids_per_xcd - 1) + local_pid;
+}
+
+let RM = { NXCD: 8, M: 8, N: 8 };
+function renderRM() {
+  const total = RM.M * RM.N;
+  const xcdOfTile = new Array(total).fill(-1);
+  for (let p_hw = 0; p_hw < total; p_hw++) {
+    const lp = remapXcd(p_hw, total, RM.NXCD);
+    if (lp < 0 || lp >= total) continue;
+    const m = Math.floor(lp / RM.N), n = lp % RM.N;
+    xcdOfTile[m * RM.N + n] = p_hw % RM.NXCD;
+  }
+  drawGrid2D(document.getElementById("cv-rm"), RM.M, RM.N, (m, n) => {
+    const xcd = xcdOfTile[m * RM.N + n];
+    return { color: xcd >= 0 ? xcdColor(xcd) : "#444", label: m * RM.N + n };
+  });
+  const leg = document.getElementById("rm-legend");
+  leg.innerHTML = "";
+  for (let i=0;i<RM.NXCD;i++) leg.innerHTML += `<span><span class="sw" style="background:${xcdColor(i)}"></span>XCD ${i}</span>`;
+
+  // Per-XCD lane view: each lane = one XCD's contiguous block of logical PIDs.
+  const rmLanes = Array.from({length: RM.NXCD}, () => []);
+  for (let p_hw = 0; p_hw < total; p_hw++) {
+    const xcd = p_hw % RM.NXCD;
+    const lp = remapXcd(p_hw, total, RM.NXCD);
+    rmLanes[xcd].push({ label: lp });
+  }
+  drawXcdLanes(document.getElementById("cv-rm-lanes"), rmLanes, { groupTag: null });
+
+  document.getElementById("rm-stats").innerHTML =
+    `<span class="stat">GRID_MN = M·N = <b>${total}</b></span>
+     <span class="stat">PIDs per XCD ≈ <b>${Math.ceil(total/RM.NXCD)}</b> (= CHUNK_SIZE)</span>
+     <span class="stat warn">L2-greedy: max chunk size</span>
+     <span class="stat bad">huge contiguous block per XCD → starves LLC</span>`;
+}
+bind("rm-nxcd", v => { RM.NXCD = v; renderRM(); });
+bind("rm-m",    v => { RM.M    = v; renderRM(); });
+bind("rm-n",    v => { RM.N    = v; renderRM(); });
+renderRM();
+
+// ---------- 5: pid_grid (windowed traversal) ----------
+function pidGrid(pid, num_pid_m, num_pid_n, GROUP_SIZE_M) {
+  if (GROUP_SIZE_M === 1) {
+    return [Math.floor(pid/num_pid_n), pid % num_pid_n];
+  }
+  const num_pid_in_group = GROUP_SIZE_M * num_pid_n;
+  const group_id = Math.floor(pid / num_pid_in_group);
+  const first_pid_m = group_id * GROUP_SIZE_M;
+  const group_size_m = Math.max(0, Math.min(num_pid_m - first_pid_m, GROUP_SIZE_M));
+  if (group_size_m <= 0) return [-1, -1];
+  const pid_m = first_pid_m + (pid % group_size_m);
+  const pid_n = Math.floor((pid % num_pid_in_group) / group_size_m);
+  return [pid_m, pid_n];
+}
+
+let PG = { M: 8, N: 8, G: 4, STEP: 63 };
+function renderPG() {
+  const total = PG.M * PG.N;
+  document.getElementById("pg-step").max = total-1;
+  if (PG.STEP >= total) { PG.STEP = total-1; document.getElementById("pg-step").value = PG.STEP; document.getElementById("pg-step-v").textContent = PG.STEP; }
+  const c = document.getElementById("cv-pg");
+  const { ctx, w: W, h: H } = prepCanvas(c);
+  ctx.clearRect(0,0,W,H);
+  // axes
+  const pad = 36;
+  const cellW = (W - pad*2) / PG.N;
+  const cellH = (H - pad*2) / PG.M;
+  ctx.font = "10px ui-monospace, monospace";
+  ctx.fillStyle = MUTED;
+  ctx.fillText("pid_n →", W - pad - 50, pad - 14);
+  ctx.save();
+  ctx.translate(14, pad + 30);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText("pid_m →", 0, 0);
+  ctx.restore();
+  // col headers
+  for (let n=0;n<PG.N;n++) {
+    ctx.fillStyle = MUTED;
+    ctx.fillText(String(n), pad + n*cellW + cellW/2 - 4, pad - 4);
+  }
+  for (let m=0;m<PG.M;m++) {
+    ctx.fillStyle = MUTED;
+    ctx.fillText(String(m), pad - 18, pad + m*cellH + cellH/2 + 4);
+  }
+  // compute visit order and window-id
+  const order = new Array(PG.M*PG.N).fill(-1);
+  const windowOf = new Array(PG.M*PG.N).fill(-1);
+  for (let pid=0; pid<PG.M*PG.N; pid++) {
+    const [m,n] = pidGrid(pid, PG.M, PG.N, PG.G);
+    if (m<0||n<0) continue;
+    const idx = m*PG.N + n;
+    order[idx] = pid;
+    windowOf[idx] = Math.floor(pid / (PG.G * PG.N));
+  }
+  // draw cells
+  for (let m=0;m<PG.M;m++) {
+    for (let n=0;n<PG.N;n++) {
+      const idx = m*PG.N + n;
+      const pid = order[idx];
+      const wid = windowOf[idx];
+      const x = pad + n*cellW, y = pad + m*cellH;
+      ctx.fillStyle = wid >= 0 ? xcdColor(wid) : "#444";
+      ctx.globalAlpha = pid <= PG.STEP ? 0.95 : 0.18;
+      ctx.fillRect(x+1, y+1, cellW-2, cellH-2);
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = LINE;
+      ctx.strokeRect(x+0.5, y+0.5, cellW, cellH);
+      ctx.fillStyle = "#0b0d12";
+      ctx.font = "11px ui-monospace, monospace";
+      const label = String(pid);
+      ctx.fillText(label, x + cellW/2 - label.length*3, y + cellH/2 + 4);
+    }
+  }
+  // trace path
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for (let pid=0; pid<=PG.STEP; pid++) {
+    const [m,n] = pidGrid(pid, PG.M, PG.N, PG.G);
+    if (m<0||n<0) continue;
+    const cx = pad + n*cellW + cellW/2;
+    const cy = pad + m*cellH + cellH/2;
+    if (pid === 0) ctx.moveTo(cx, cy);
+    else ctx.lineTo(cx, cy);
+  }
+  ctx.stroke();
+  // highlight current
+  const [cm, cn] = pidGrid(PG.STEP, PG.M, PG.N, PG.G);
+  if (cm >= 0 && cn >= 0) {
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(pad + cn*cellW + 1, pad + cm*cellH + 1, cellW-2, cellH-2);
+  }
+  // legend
+  const numWindows = Math.ceil(PG.M / Math.max(1,PG.G));
+  const leg = document.getElementById("pg-legend");
+  leg.innerHTML = "";
+  for (let i=0;i<numWindows;i++) leg.innerHTML += `<span><span class="sw" style="background:${xcdColor(i)}"></span>window ${i}</span>`;
+
+  // Per-XCD lane view (assuming default round-robin, NXCD = 8): each lane =
+  // one XCD's HW work queue, label = (m,n), groupKey = group_id (window index).
+  const PG_NXCD = 8;
+  const totalPG = PG.M * PG.N;
+  const groupSize = PG.G * PG.N;
+  const pgLanes = Array.from({length: PG_NXCD}, () => []);
+  for (let pid = 0; pid < totalPG; pid++) {
+    const xcd = pid % PG_NXCD;
+    const [m, n] = pidGrid(pid, PG.M, PG.N, PG.G);
+    const gk = Math.floor(pid / groupSize);
+    pgLanes[xcd].push({
+      label: `${m},${n}`,
+      groupKey: gk,
+      alpha: pid <= PG.STEP ? 0.85 : 0.18,
+      highlight: pid === PG.STEP,
+    });
+  }
+  drawXcdLanes(document.getElementById("cv-pg-lanes"), pgLanes, { groupTag: "g" });
+}
+bind("pg-m", v => { PG.M = v; renderPG(); });
+bind("pg-n", v => { PG.N = v; renderPG(); });
+bind("pg-g", v => { PG.G = v; renderPG(); });
+bind("pg-step", v => { PG.STEP = v; renderPG(); });
+renderPG();
+
+// ---------- 6: composition view ----------
+let CP = { M: 8, N: 8, X: 8, C: 4, G: 4, P1: true, P2: true };
+function compositionAssign() {
+  const total = CP.M * CP.N;
+  const grid = new Array(total).fill(-1); // grid[m*N+n] = XCD
+  for (let logicalPid=0; logicalPid<total; logicalPid++) {
+    // Step 1: get the PID that the kernel author uses as "pid"
+    // Note: in the actual call site, remap_xcd_chunked is applied to the HW PID
+    // to compute which work-unit (logical PID) to run. We invert: we want to
+    // simulate which output tile each XCD ends up running.
+    // Order of ops in callers: pid_hw -> remap_xcd_chunked -> pid_grid -> (m,n)
+    let pid = logicalPid;
+    let xcd;
+    if (CP.P1) {
+      const remapped = remapXcdChunked(pid, total, CP.X, CP.C);
+      xcd = remapped % CP.X;
+    } else {
+      xcd = pid % CP.X;
+    }
+    // Step 2: get (pid_m, pid_n) using pid_grid (uses original pid in code,
+    // or the remapped one depending on call order in kernel). In aiter
+    // callers it's: pid = remap...; pid_m, pid_n = pid_grid(pid, ...).
+    // So pid_grid receives the remapped pid.
+    const used_pid = CP.P1 ? remapXcdChunked(pid, total, CP.X, CP.C) : pid;
+    const G = CP.P2 ? CP.G : 1;
+    const [m,n] = pidGrid(used_pid, CP.M, CP.N, G);
+    if (m < 0 || n < 0) continue;
+    grid[m*CP.N + n] = xcd;
+  }
+  return grid;
+}
+function bboxAreaPerXCD(grid) {
+  const acc = {};
+  for (let m=0;m<CP.M;m++) {
+    for (let n=0;n<CP.N;n++) {
+      const x = grid[m*CP.N+n];
+      if (x < 0) continue;
+      if (!acc[x]) acc[x] = {minM:m, maxM:m, minN:n, maxN:n, count:0};
+      const a = acc[x];
+      a.minM = Math.min(a.minM, m); a.maxM = Math.max(a.maxM, m);
+      a.minN = Math.min(a.minN, n); a.maxN = Math.max(a.maxN, n);
+      a.count++;
+    }
+  }
+  let totalArea = 0, totalCount = 0;
+  for (const k in acc) {
+    const a = acc[k];
+    totalArea  += (a.maxM-a.minM+1) * (a.maxN-a.minN+1);
+    totalCount += a.count;
+  }
+  return { ratio: totalCount > 0 ? totalArea / totalCount : 0, acc };
+}
+function renderCP() {
+  const total = CP.M*CP.N;
+  const grid = compositionAssign();
+  const c = document.getElementById("cv-cp");
+  const { ctx, w: W, h: H } = prepCanvas(c);
+  ctx.clearRect(0,0,W,H);
+  const pad = 28;
+  const cellW = (W - pad*2)/CP.N;
+  const cellH = (H - pad*2)/CP.M;
+  for (let m=0;m<CP.M;m++) for (let n=0;n<CP.N;n++) {
+    const xcd = grid[m*CP.N+n];
+    const x = pad + n*cellW, y = pad + m*cellH;
+    ctx.fillStyle = xcd >= 0 ? xcdColor(xcd) : "#444";
+    ctx.fillRect(x+1, y+1, cellW-2, cellH-2);
+    ctx.strokeStyle = LINE;
+    ctx.strokeRect(x+0.5, y+0.5, cellW, cellH);
+    ctx.fillStyle = "#0b0d12";
+    ctx.font = "10px ui-monospace, monospace";
+    ctx.fillText(String(xcd), x + cellW/2 - 4, y + cellH/2 + 4);
+  }
+  // legend
+  const leg = document.getElementById("cp-legend");
+  leg.innerHTML = "";
+  for (let i=0;i<CP.X;i++) leg.innerHTML += `<span><span class="sw" style="background:${xcdColor(i)}"></span>XCD ${i}</span>`;
+  const bbox = bboxAreaPerXCD(grid);
+  const ratio = bbox.ratio.toFixed(2);
+  const cls = bbox.ratio <= 1.5 ? 'good' : bbox.ratio <= 3 ? 'warn' : 'bad';
+  document.getElementById("cp-stats").innerHTML =
+    `<span class="stat">compactness = bbox-area / tiles-owned = <b>${ratio}</b></span>
+     <span class="stat ${cls}">${ratio === '1.00' ? 'perfectly tight' : (bbox.ratio <= 1.5 ? 'tight (L2-friendly)' : bbox.ratio <= 3 ? 'spread' : 'scattered')}</span>
+     <span class="stat">Phase 1: ${CP.P1 ? 'ON' : 'off'} · Phase 2: ${CP.P2 ? 'ON' : 'off'}</span>`;
+}
+bind("cp-m", v => { CP.M = v; renderCP(); });
+bind("cp-n", v => { CP.N = v; renderCP(); });
+bind("cp-x", v => { CP.X = v; renderCP(); });
+bind("cp-c", v => { CP.C = v; renderCP(); });
+bind("cp-g", v => { CP.G = v; renderCP(); });
+function setToggle(idOff, idOn, val, key) {
+  const off = document.getElementById(idOff), on = document.getElementById(idOn);
+  function refresh() {
+    off.className = CP[key] ? "" : "active";
+    on.className  = CP[key] ? "active" : "";
+  }
+  off.onclick = () => { CP[key] = false; refresh(); renderCP(); };
+  on.onclick  = () => { CP[key] = true;  refresh(); renderCP(); };
+  refresh();
+}
+setToggle("cp-p1-off", "cp-p1-on", true, "P1");
+setToggle("cp-p2-off", "cp-p2-on", true, "P2");
+renderCP();
+
+// ---------- 7: pid_grid_3d ----------
+function pidGrid3d(pid, M, N, K) {
+  return [pid % M, Math.floor(pid/M) % N, Math.floor(pid/(M*N)) % K];
+}
+let P3 = { M:4, N:4, K:3, PID:0 };
+function renderP3() {
+  const total = P3.M*P3.N*P3.K;
+  document.getElementById("p3-pid").max = total-1;
+  if (P3.PID >= total) { P3.PID = total-1; document.getElementById("p3-pid").value = P3.PID; document.getElementById("p3-pid-v").textContent = P3.PID; }
+  const c = document.getElementById("cv-p3");
+  const { ctx, w: W, h: H } = prepCanvas(c);
+  ctx.clearRect(0,0,W,H);
+  const pad = 30;
+  const gap = 14;
+  const slabW = (W - pad*2 - gap*(P3.K-1)) / P3.K;
+  const cellW = slabW / P3.N;
+  const cellH = (H - pad*2) / P3.M;
+  for (let k=0;k<P3.K;k++) {
+    const ox = pad + k*(slabW+gap);
+    // label
+    ctx.fillStyle = MUTED;
+    ctx.font = "11px ui-monospace, monospace";
+    ctx.fillText(`pid_k = ${k}`, ox, pad - 6);
+    for (let m=0;m<P3.M;m++) for (let n=0;n<P3.N;n++) {
+      const pid = m + n*P3.M + k*P3.M*P3.N;
+      const x = ox + n*cellW, y = pad + m*cellH;
+      ctx.fillStyle = xcdColor(k);
+      ctx.globalAlpha = pid <= P3.PID ? 0.9 : 0.18;
+      ctx.fillRect(x+1, y+1, cellW-2, cellH-2);
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = LINE;
+      ctx.strokeRect(x+0.5, y+0.5, cellW, cellH);
+      ctx.fillStyle = "#0b0d12";
+      ctx.font = "10px ui-monospace, monospace";
+      ctx.fillText(String(pid), x + cellW/2 - String(pid).length*3, y + cellH/2 + 4);
+    }
+  }
+  // highlight current
+  const [m,n,k] = pidGrid3d(P3.PID, P3.M, P3.N, P3.K);
+  const ox = pad + k*(slabW+gap);
+  ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
+  ctx.strokeRect(ox + n*cellW + 1, pad + m*cellH + 1, cellW-2, cellH-2);
+  document.getElementById("p3-stats").innerHTML =
+    `<span class="stat">pid <b>${P3.PID}</b> → (m=<b>${m}</b>, n=<b>${n}</b>, k=<b>${k}</b>)</span>
+     <span class="stat">M fastest, K slowest</span>
+     <span class="stat bad">no chiplet awareness</span>`;
+
+  // Per-XCD lane view (HW default round-robin, NXCD = 8)
+  const P3_NXCD = 8;
+  const totalP3 = P3.M * P3.N * P3.K;
+  const p3Lanes = Array.from({length: P3_NXCD}, () => []);
+  for (let pid = 0; pid < totalP3; pid++) {
+    const xcd = pid % P3_NXCD;
+    const [mm, nn, kk] = pidGrid3d(pid, P3.M, P3.N, P3.K);
+    p3Lanes[xcd].push({
+      label: `${mm},${nn},${kk}`,
+      colorKey: kk,
+      highlight: pid === P3.PID,
+      alpha: pid <= P3.PID ? 0.95 : 0.25,
+    });
+  }
+  drawXcdLanes(document.getElementById("cv-p3-lanes"), p3Lanes, { groupTag: null });
+}
+bind("p3-m",   v => { P3.M = v; renderP3(); });
+bind("p3-n",   v => { P3.N = v; renderP3(); });
+bind("p3-k",   v => { P3.K = v; renderP3(); });
+bind("p3-pid", v => { P3.PID = v; renderP3(); });
+renderP3();
+
+// ---------- 8: XCD layout — horizontal lanes ----------
+let XL = { fn: "rcc", NXCD: 8, M: 6, N: 6, CHUNK: 3, G: 3, K: 2 };
+function showRow(rowId, on) {
+  const row = document.getElementById(rowId);
+  if (row) row.style.display = on ? "" : "none";
+}
+function renderXL() {
+  // problem size depends on whether we're in the 3-D function
+  const tilesMN = XL.M * XL.N;
+  const total = XL.fn === "p3d" ? tilesMN * XL.K : tilesMN;
+
+  const lanes = Array.from({length: XL.NXCD}, () => []);
+  // groupTag = prefix to show on run badge ("c" for chunks, "g" for groups, null = no grouping)
+  let groupTag = null;
+  for (let p_hw = 0; p_hw < total; p_hw++) {
+    const xcd = p_hw % XL.NXCD;
+    let label, colorKey = xcd, groupKey = -1;
+    if (XL.fn === "default") {
+      label = String(p_hw);
+    } else if (XL.fn === "rcc") {
+      const lp = remapXcdChunked(p_hw, total, XL.NXCD, XL.CHUNK);
+      label = String(lp);
+      // chunk index = chunk_idx from the kernel formula (constant inside each CHUNK run within a lane)
+      const tailThresh = Math.floor(total / (XL.NXCD * XL.CHUNK)) * (XL.NXCD * XL.CHUNK);
+      groupKey = p_hw > tailThresh ? -1 : Math.floor((p_hw / XL.NXCD) / XL.CHUNK);
+      groupTag = "c";
+    } else if (XL.fn === "rm") {
+      const lp = remapXcd(p_hw, total, XL.NXCD);
+      label = String(lp);
+    } else if (XL.fn === "pg") {
+      const [m, n] = pidGrid(p_hw, XL.M, XL.N, XL.G);
+      label = `${m},${n}`;
+      groupKey = Math.floor(p_hw / (XL.G * XL.N));   // pid_grid window/group index
+      groupTag = "g";
+    } else if (XL.fn === "p3d") {
+      const [m, n, k] = pidGrid3d(p_hw, XL.M, XL.N, XL.K);
+      label = `${m},${n},${k}`;
+      colorKey = k;  // colour by K-slab for the 3-D view
+    }
+    lanes[xcd].push({ label, colorKey, groupKey });
+  }
+
+  drawXcdLanes(document.getElementById("cv-xl"), lanes, { groupTag });
+
+  // hide irrelevant control rows per function
+  showRow("xl-chunk-row", XL.fn === "rcc");
+  showRow("xl-g-row",     XL.fn === "pg");
+  showRow("xl-k-row",     XL.fn === "p3d");
+
+  // stats
+  const sizes = lanes.map(l => l.length);
+  const maxS = Math.max(...sizes), minS = Math.min(...sizes);
+  const balanced = (maxS - minS) <= 1;
+  let extra = "";
+  if (XL.fn === "rcc") extra = `<span class="stat good">chunks of ${XL.CHUNK} consecutive logical PIDs per lane</span>`;
+  else if (XL.fn === "rm") extra = `<span class="stat warn">one giant contiguous block per lane (L2-greedy)</span>`;
+  else if (XL.fn === "pg") extra = `<span class="stat">each lane = ${XL.G > 1 ? `tiles inside windows of height ${XL.G}` : 'row-major spread'}</span>`;
+  else if (XL.fn === "p3d") extra = `<span class="stat">colour = k-slab; K iterates slowest</span>`;
+  else extra = `<span class="stat bad">no spatial grouping</span>`;
+
+  document.getElementById("xl-stats").innerHTML =
+    `<span class="stat">total HW PIDs = <b>${total}</b></span>
+     <span class="stat">PIDs/XCD range <b>${minS}..${maxS}</b></span>
+     <span class="stat ${balanced ? 'good' : 'warn'}">${balanced ? 'balanced' : 'imbalanced'}</span>
+     ${extra}`;
+}
+bind("xl-nxcd",  v => { XL.NXCD  = v; renderXL(); });
+bind("xl-m",     v => { XL.M     = v; renderXL(); });
+bind("xl-n",     v => { XL.N     = v; renderXL(); });
+bind("xl-chunk", v => { XL.CHUNK = v; renderXL(); });
+bind("xl-g",     v => { XL.G     = v; renderXL(); });
+bind("xl-k",     v => { XL.K     = v; renderXL(); });
+document.getElementById("xl-fn").addEventListener("change", e => {
+  XL.fn = e.target.value;
+  renderXL();
+});
+renderXL();
+</script>
+</body>
+</html>
