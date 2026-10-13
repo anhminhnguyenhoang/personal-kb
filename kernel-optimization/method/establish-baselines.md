@@ -99,9 +99,11 @@ A manifest writer records most of this automatically:
 - **Ask the reference what it actually runs.** Profile the library call on your exact shape and read the real kernel name (macro tile, atom, direct-to-LDS, prefetch depth). A config inferred from a similar shape or a tuning file can be the wrong family. The real one may be a tile your framework already expresses with deeper K.
 - **Prove a bit-identical rebuild before you edit a reference binary.** Disassemble, reassemble and relink the unmodified reference first. Outputs must match exactly and timing within ~1%. Count instructions on both sides: a disassembler can silently drop modifiers (e.g. DPP lane controls), and a rebuild that is shorter is broken. Rebuild the baseline from current source before each comparison so a stale binary does not fake a divergence.
 - **Use an integer-exact test before a tolerance test.** Small-integer inputs (e.g. A, C in {0,1,2}, B in {-2..2}) keep every product and sum exact in fp16/bf16/fp32, so the GPU result must match a CPU reference bit for bit. Also test alpha = 0 with NaN in the output buffer: correct code must not read it. ([hipBLASLt clients tests](https://github.com/ROCm/hipBLASLt/tree/develop/clients))
+- **Test the call exactly as the caller makes it.** Use the caller's real layouts, including non-contiguous views (a transposed view is not a fresh contiguous tensor), and its preallocated output buffers. An idealized contiguous input gives the wrong speed and can hide a kernel that is wrong on strided input. ([ROCm/aiter op_tests](https://github.com/ROCm/aiter/tree/main/op_tests))
+- **Skip unsupported configs instead of reporting them.** A kernel that is wrong for some layout or dtype still produces a fast time. Gate it out per config, and gate whole ops with an arch allow-list so an unknown new GPU does not run an unbuilt kernel. ([ROCm/aiter op_tests](https://github.com/ROCm/aiter/tree/main/op_tests))
+- **Report TFLOP/s and TB/s next to every time.** Derive both from the same measured time and the op's real FLOP and byte counts. A bare time does not say which roof the kernel is near. ([ROCm/aiter op_tests](https://github.com/ROCm/aiter/tree/main/op_tests))
 
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#establish-baselines).
 
 ---
 Next: [bottleneck-classification](bottleneck-classification.md). Exact commands: [reproducible-commands](../../dsl/ck-dsl/reproducible-commands.md). Hygiene knobs: [knob-catalog-and-sweep](../../dsl/ck-dsl/knob-catalog-and-sweep.md).
-

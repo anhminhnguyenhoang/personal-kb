@@ -1,7 +1,7 @@
 ---
 name: varlen-idioms
 description: "Verified pure-FlyDSL layout-API idioms for varlen/jagged kernels — device scalar read, runtime base-offset views, runtime early-exit (scf.IfOp), bounded buffer descriptors (OOB-drop), plain-B MFMA K-layout, bf16 broadcast-bias epilogue"
-source: distilled from building a varlen grouped-GEMM in FlyDSL
+source: https://github.com/ROCm/FlyDSL (python/flydsl/expr/rocdl/universal.py make_buffer_tensor, python/flydsl/expr/typing.py, kernels/common/buffer_ops.py); idioms distilled from building a varlen grouped-GEMM
 ---
 
 # Varlen / jagged kernel idioms (FlyDSL layout API)
@@ -11,12 +11,8 @@ device-resident offsets), written in pure `flydsl.expr` (`import flydsl.expr as 
 with no other dependencies. They combine a **runtime base-offset** with the
 layout/partition API, so a varlen kernel need not fall back to manual `buffer_load`.
 
-> **Verify against current source before relying.** The installed venv can lag the
-> repo — e.g. the installed `make_buffer_tensor` had no `num_records_bytes` kwarg
-> even though the repo source did, which is why the bounded descriptor below is
-> built inline from `make_ptr` rather than via the helper.
->
-> Uses private APIs (`_get_buffer_flags`, `SmemPtr._view_cache`) that may change between FlyDSL versions.
+> The idioms were verified on GPU. The API spellings below follow current FlyDSL source and
+> were not re-run; check them against your installed version.
 
 ## The varlen contract
 
@@ -33,17 +29,20 @@ every idiom below.
 
 ## 1. Device scalar read (e.g. `seq_offsets[b]`)
 
-There is **no `get_scalar` helper for globals**. Read a device scalar with a
-buffer resource + `buffer_load`:
+There is **no `get_scalar` helper for globals**. A scalar base plus an element offset has no
+layout form, so this is the one place the legacy raw buffer ops still fit:
 
 ```python
-rsrc = fx.buffer_ops.create_buffer_resource(SEQ_OFFSETS, max_size=True)
-seq_start = fx.buffer_ops.buffer_load(rsrc, fx.Int32(b),   vec_width=1, dtype=fx.T.i32())
-seq_end   = fx.buffer_ops.buffer_load(rsrc, fx.Int32(b)+fx.Int32(1), vec_width=1, dtype=fx.T.i32())
+from kernels.common import buffer_ops            # moved out of flydsl.expr
+rsrc = buffer_ops.create_buffer_resource(SEQ_OFFSETS, max_size=True)
+seq_start = buffer_ops.buffer_load(rsrc, fx.Int32(b),   vec_width=1, dtype=fx.T.i32)
+seq_end   = buffer_ops.buffer_load(rsrc, fx.Int32(b)+fx.Int32(1), vec_width=1, dtype=fx.T.i32)
 ```
 
+`fx.T.*` are properties: write `fx.T.i32`, not `fx.T.i32()`.
+
 **Scalarize uniform values** with `readfirstlane` so they land in SGPRs:
-`seq_start = fx.rocdl.readfirstlane(fx.T.i32(), seq_start)`. This matters in the
+`seq_start = fx.rocdl.readfirstlane(fx.T.i32, seq_start)`. This matters in the
 epilogue — a divergent C descriptor forces a per-lane store waterfall (257
 `v_readfirstlane_b32` + a 64-wide exec-mask loop collapse to ~0 once scalarized).
 
@@ -89,28 +88,9 @@ Bound the buffer-desc to the group's real byte size; the hardware then OOB-drops
 out-of-range lanes (reads return 0, stores are masked):
 
 ```python
-from flydsl._mlir.dialects.fly_rocdl import TargetAddressSpace
-from flydsl.expr.buffer_ops import _get_buffer_flags
-
-def make_bounded_buffer_tensor(tensor, num_records_bytes):  # num_records_bytes: fx.Int64
-    elem_ty = tensor.element_type
-    ptr     = fx.get_iter(tensor)
-    layout  = fx.get_layout(tensor)
-    buf_ptr_ty = fx.PointerType.get(
-        elem_ty=elem_ty.ir_type,
-        address_space=TargetAddressSpace.BufferDesc,
-        alignment=ptr.alignment,
-    )
-    buf_ptr = fx.make_ptr(buf_ptr_ty, [
-        ptr, fx.Int16(0).ir_value(),
-        num_records_bytes.ir_value(),
-        fx.Int32(_get_buffer_flags()).ir_value(),
-    ])
-    return fx.make_view(buf_ptr, layout)
-
-# bound BOTH A and C to the group's real rows:
-A_buf = make_bounded_buffer_tensor(A_g, fx.Int64(fx.Int32(M_b) * fx.Int32(K) * fx.Int32(2)))
-C_buf = make_bounded_buffer_tensor(C_g, fx.Int64(fx.Int32(M_b) * fx.Int32(N) * fx.Int32(2)))
+# bound BOTH A and C to the group's real rows (bytes; bf16 = 2 B)
+A_buf = fx.rocdl.make_buffer_tensor(A_g, num_records_bytes=fx.Int64(M_b) * K * 2)
+C_buf = fx.rocdl.make_buffer_tensor(C_g, num_records_bytes=fx.Int64(M_b) * N * 2)
 ```
 
 **The fault this prevents is data-dependent and intermittent.** An unbounded
@@ -130,12 +110,8 @@ its `preshuffle_layout_B` **view** (omit that), **not** the K-layout. The nested
 ## 6. bf16 epilogue + broadcast bias
 
 ```python
-# truncate fp32 accumulators + bias to bf16
-mma_frag_C_bf16.store(fx.arith.trunc_f(
-    fx.T.VectorType.get([C_FRAG_LEN], fx.T.bf16()),
-    fx.arith.addf(mma_frag_C.load(), bias_f32)))
-# extend bias to fp32 first (extf is the raw op; trunc_f is the wrapper)
-bias_f32 = fx.arith.ExtFOp(fx.T.VectorType.get([C_FRAG_LEN], fx.T.f32()), bias_frag.load()).result
+bias_f32 = fx.Vector(bias_frag.load()).to(fx.Float32)          # extend bias first
+mma_frag_C_bf16.store((fx.Vector(mma_frag_C.load()) + bias_f32).to(fx.BFloat16))
 ```
 
 Broadcast bias = a **stride-0 M view** of the group's `(N,)` slice, partitioned
@@ -154,9 +130,9 @@ When the tile body lives inside an `scf.for` persistent loop:
   merely read inside, the DSL auto-promotes them to `scf.for` iter_args (block
   args), and the gemm-op lowering's `getDefiningOp<MakeTiledMma>` then fails. They
   are loop-invariant, so LICM can still hoist the cheap setup later.
-- **Reset `SmemPtr._view_cache = None` each iteration** so the 2nd+ iteration's
-  `fx.get_dyn_shared` views don't reuse the previous iteration's SSA values (MLIR
-  dominance error).
+- **Allocate LDS with `fx.SharedAllocator`.** Its views are taken per use, so iterations do
+  not reuse a cached view's SSA values (the legacy `SmemPtr` path needed a manual cache
+  reset to avoid that dominance error). Build a view at kernel top if the epilogue uses it.
 
 ---
 Related: [measurement](../../kernel-optimization/method/measurement.md) · [hot-loop-scheduling](hot-loop-scheduling.md) · [work-decomposition](../../kernel-optimization/levers/work-decomposition.md)

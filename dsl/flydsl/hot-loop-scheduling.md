@@ -7,7 +7,7 @@ source: FlyDSL hot_loop_scheduler (examples/04-preshuffle_gemm.py) and aiter sma
 ## Hot-loop scheduling: how to know what's effective
 
 `sched_*(X)` is an **ordering hint**, not work. Each call lowers to
-`sched_group_barrier(MASK, X, 0)` (`flydsl/expr/rocdl.py`): MASK picks the
+`sched_group_barrier(MASK, X, 0)` (`flydsl/expr/rocdl/__init__.py`): MASK picks the
 machine (mfma `0x008` / vmem-rd `0x020` / ds-rd `0x100` / ds-wr `0x200`), `X` is
 a **count of lowered instructions** to place in that group, syncID is 0. So `X`
 is a tally across the whole unrolled stage — one `fx.gemm` lowers to *many* MFMA,

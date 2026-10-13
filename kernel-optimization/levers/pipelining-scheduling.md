@@ -44,7 +44,7 @@ source: CK DSL Optimization Runbook (ROCm/rocm-libraries@1efeadd, projects/compo
 - Collapse multiple waits where possible.
 - Avoid compiler-generated over-waiting by separating phases.
 - `lgkmcnt` is a 4-bit field on gfx9 (max 15). The immediate `20336`
-  (`0x4F70`) decodes to vmcnt 16, expcnt 7, lgkmcnt 15;
+  (`0x4F70`) decodes to vmcnt 16, expcnt 7, lgkmcnt 15, not lgkmcnt 16;
   decode immediates against the ISA field layout.
 
 ### 8.4 Scheduling Hints
@@ -84,10 +84,9 @@ Judge a hint by the instruction order it produces.
 
 - **A deeper buffer needs a pipeline that reads it, and one K-tile can break a 2-stage loop.** Allocating a third stage buffer is a no-op unless the pipeline actually cycles through it. A tile depth equal to the whole reduction (a single K-tile) can silently mis-accumulate in a 2-stage double-buffer epilogue. Cosine similarity hid a 123% relative error, so also check mean signed error.
 - **LDS size caps pipeline depth.** LDS use grows as tile bytes × stages. With 64 KB LDS (CDNA3), a GEMM tile typically fits 2 stages, and two fused GEMMs fit 1. With 160 KB (CDNA4), 3 to 4 stages fit. Size the stages before you tune the schedule. ([ROCm workload optimization](https://rocm.docs.amd.com/en/latest/how-to/rocm-for-ai/inference-optimization/workload.html))
-- **Issue the next phase's global loads before a barrier wait.** A wave stalled at `s_barrier` does no work, so loads issued just before it overlap that dead time almost for free. ([FlyDSL tuning guide](https://github.com/ROCm/FlyDSL))
-- **`vmcnt` counts in issue order, so moving a load moves every wait below it.** Hoisting a prefetch changes which load a later `vmcnt(N)` covers; recount each wait after the move. Scalar loads return out of order, so only `lgkmcnt(0)` is safe while SMEM loads are in flight. ([CDNA4 ISA](https://www.amd.com/content/dam/amd/en/documents/instinct-tech-docs/instruction-set-architectures/amd-instinct-cdna4-instruction-set-architecture.pdf), s_waitcnt)
 
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#pipelining-scheduling).
 
 ---
 Pipeline knobs (mem/compv3/compv4): [knob-catalog-and-sweep](../../dsl/ck-dsl/knob-catalog-and-sweep.md). Async DRAM->LDS contract: [memory-hierarchy](memory-hierarchy.md). gfx950 compiler caveats: [target-architecture-gfx950](../../hardware/amd-cdna/gfx950.md).
+

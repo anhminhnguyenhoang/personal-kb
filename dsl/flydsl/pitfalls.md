@@ -32,9 +32,10 @@ Branch-local definitions, early exit, and persistent-loop view caching are in
 | `range(a, b, s)`, no `init` | `scf.for`; variables assigned in the body become loop-carried automatically |
 | `fx.range_constexpr(n)` | unrolled |
 
-Use **typed DSL bounds** (`fx.Int32(..)` / `fx.Index(..)`)
-for runtime loops, and `range_constexpr` for unrolling. Then confirm `scf.for` in the
-first IR dump. Bounds must be i32 (an index type is cast, with a warning).
+Use `fx.Int32(..)` bounds for runtime loops, and `range_constexpr` for unrolling. Then
+confirm `scf.for` in the first IR dump. Without `init=`, bounds must be i32: an index bound
+is cast with a warning and an i64 bound raises. With `init=`, bounds (including Python ints)
+are cast to index, and `init=` is kept.
 
 Loop-carried state (explicit `init=`):
 - Keep the slot order the same across `init`, `state`, `yield`, and `results`. Each slot keeps
@@ -47,7 +48,7 @@ Loop-carried state (explicit `init=`):
 
 ## 3. Addressing and data
 
-- `buffer_load(rsrc, off, vec_width, dtype)`: `off` is in **elements of `dtype`**. To read
+- Legacy raw `buffer_load(rsrc, off, vec_width, dtype)`: `off` is in **elements of `dtype`**. To read
   packed fp8 bytes as `i32`, use `byte_off // 4`. Recompute offsets every time you change
   dtype, packing, or vector width.
 - `Vector.store` needs a vector. Make a 1-element vector with `Vec.from_elements([x], T)`.

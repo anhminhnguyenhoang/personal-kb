@@ -125,7 +125,7 @@ kernels, not hgemm.
 
 ```
  per lane : reduce the vector in registers  (range_constexpr over VEC)
- per wave : xor-shuffle 32,16,8,4,2,1        gpu.ShuffleOp(v, sh, 64, mode="xor")
+ per wave : xor-shuffle 32,16,8,4,2,1        gpu.shuffle_xor(v, sh, 64)
  per block: lane0 of each wave → LDS[wave] ; barrier
             wave0 reads NUM_WAVES partials (others pad with identity) → shuffle-reduce
             lane0 → LDS[0] ; barrier ; everyone reads LDS[0]
