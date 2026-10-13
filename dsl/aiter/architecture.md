@@ -34,7 +34,7 @@ one kernel from many backends, per shape.
 | `aiter/jit/` | JIT engine (`core.py`: `@compile_ops`, config resolution), `optCompilerConfig.json` build recipes |
 | `csrc/` | C++/HIP/CK sources and the per-family tuners (`gemm_a16w16/`, `ck_gemm_*`, `ck_gemm_moe_2stages_codegen/`, `opus_gemm/`) |
 | `hsa/<gfx>/` | Precompiled assembly code objects (`.co`) plus CSV metadata; no `.s` source is shipped |
-| `gradlib/` | Older hipBLASLt-only GEMM tuner |
+| `gradlib/` | hipBLASLt-only GEMM tuner |
 | `op_tests/` | Per-op correctness and perf tests |
 
 ## Backends (libtypes)

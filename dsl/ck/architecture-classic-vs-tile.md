@@ -71,8 +71,8 @@ ms   = inv.Run(arg, StreamConfig{stream, time_kernel})
 
 | Workload | Start with | Why |
 |---|---|---|
-| Dense bf16/fp16 square GEMM | Benchmark **both**; classic `DeviceGemm_Xdl_CShuffleV3` / universal v3 was the reference | Issue #1727: ck_tile 359 vs classic 615 TFLOP/s at 4096³, same 256×256×64 tile; a later fix (K tile 64) reached ~80 % of classic |
-| Attention (prefill, decode, paged, bwd) | CK-Tile FMHA | Classic batched softmax-GEMM is legacy; the shipped FMHA library is generated from the CK-Tile example |
+| Dense bf16/fp16 square GEMM | Benchmark **both**; classic `DeviceGemm_Xdl_CShuffleV3` / universal v3 was the reference | Classic can still win on some shapes; measure, do not assume |
+| Attention (prefill, decode, paged, bwd) | CK-Tile FMHA | The shipped FMHA library is generated from the CK-Tile example |
 | Fused MoE, block-scale / MX GEMM, small-M flatmm | CK-Tile | New features land here first |
 | Fusion the library cannot express | CK-Tile | Pipeline + Policy + Epilogue compose |
 

@@ -30,7 +30,7 @@ Each section maps a DSL-neutral note in ../../kernel-optimization/ to the ck_dsl
 - Boundary-shape parity harness → `examples/` (e.g. `examples/ck_tile_parity.py`).
 - Layouts → `UniversalGemmSpec.layout = "RCR"` / `"CRR"`; conv NHWC (`dsl_docs/instances/convolution.md`); KV paging as (block, slot).
 - Coordinate-transform DAG → `transforms.py` with `pass_through`, `pad`, `pad_dynamic`, `embed`, `unmerge`, `merge`, `indirect`; walkthrough in `architecture/TRANSFORM_DAG.md`.
-- Alignment / contiguity descriptor → `TensorDescriptor` in `transforms.py`; legacy `TensorView` / `TileWindow` in `helpers/tensor_view.py`.
+- Alignment / contiguity descriptor → `TensorDescriptor` in `transforms.py`.
 - Dtype fields in spec → e.g. `UnifiedAttention2DTiledSpec.dtype="bf16"`, `kv_storage_dtype="fp8e4m3"`.
 - Dtype catalog → `core/ir.py:34-97` (`I1`..`I64`, `BF16`, `F16`, `F32`, `FP8E4M3`, `BF8E5M2`).
 - Quantization helpers → `helpers/quant.py` (`quant_max_abs`, `quantize_scalar_f32`, `dequantize_scalar_to_f32`, `quant_ir_type`, `ir_to_qdtype`; `QDType = Literal["i8","fp8e4m3","bf8e5m2"]`).

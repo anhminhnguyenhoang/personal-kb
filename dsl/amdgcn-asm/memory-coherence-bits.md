@@ -6,8 +6,7 @@ source: https://llvm.org/docs/AMDGPUUsage.html (Memory Model GFX942 and its code
 
 # Coherence bits: sc0, sc1, nt
 
-gfx940-family chips (gfx942 and gfx950 alike) replaced the older `glc`/`slc` bits with
-`sc0`, `sc1` and `nt`. They are not "bypass L1 / bypass L2" switches. They pick a
+On gfx942 and gfx950, `sc0`, `sc1` and `nt` are not "bypass L1 / bypass L2" switches. They pick a
 **scope**, and the meaning of `sc0` changes for atomics.
 
 ## 1. The bits

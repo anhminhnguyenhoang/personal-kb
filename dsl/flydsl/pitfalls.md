@@ -1,6 +1,6 @@
 ---
 name: pitfalls
-description: FlyDSL traps that compile but run wrong, and how to debug them — trace-time vs runtime values, range/loop-carry rules and their version drift, side-effect branches, element-unit offsets, MFMA operand order, stale caches, hangs, and an isolation workflow.
+description: FlyDSL traps that compile but run wrong, and how to debug them — trace-time vs runtime values, range/loop-carry rules, side-effect branches, element-unit offsets, MFMA operand order, stale caches, hangs, and an isolation workflow.
 source: https://github.com/ROCm/FlyDSL (.claude/skills/debug-flydsl-kernel/SKILL.md, .claude/skills/flydsl-kernel-authoring/SKILL.md, docs/kernel_tuning_guide.md, python/flydsl/compiler/ast_rewriter.py)
 ---
 
@@ -24,15 +24,15 @@ Branch-local definitions, early exit, and persistent-loop view caching are in
 | runtime `if` with side effects or loop state inside a helper | result-type errors | split the bodies into local functions; wrap the `if` in a local `@flyc.jit` dispatcher |
 | a variable initialized to `None` before a runtime loop that assigns it | `TypeError` from the loop dispatcher | initialize with a typed value (`fx.Float32(0.0)`) |
 
-## 2. Loops: the rules moved between versions
+## 2. Loops
 
-| Form | Old docs / older releases | Current rewriter source |
-|---|---|---|
-| `range(a, b, s, init=[...])`, Python-int bounds | unrolled, **`init=` silently ignored** | always `scf.for` (bounds cast to index) |
-| `range(a, b, s)`, no `init` | `scf.for` if bounds are SSA; unrolled if Python ints | `scf.for`; variables assigned in the body become loop-carried automatically |
-| `fx.range_constexpr(n)` | unrolled | unrolled |
+| Form | Lowers to |
+|---|---|
+| `range(a, b, s, init=[...])` | `scf.for` (bounds cast to index) |
+| `range(a, b, s)`, no `init` | `scf.for`; variables assigned in the body become loop-carried automatically |
+| `fx.range_constexpr(n)` | unrolled |
 
-Write code that is safe in both: use **typed DSL bounds** (`fx.Int32(..)` / `fx.Index(..)`)
+Use **typed DSL bounds** (`fx.Int32(..)` / `fx.Index(..)`)
 for runtime loops, and `range_constexpr` for unrolling. Then confirm `scf.for` in the
 first IR dump. Bounds must be i32 (an index type is cast, with a warning).
 
@@ -57,9 +57,6 @@ Loop-carried state (explicit `init=`):
   forward-pass mapping into a backward pass.
 - `.transpose().clone()` in torch keeps the strided layout. The first contiguous use then
   does a hidden full copy. Use `.contiguous()` or `clone(memory_format=torch.contiguous_format)`.
-- Older releases: a `flyc.from_dlpack()` adaptor reused across calls with different
-  `Constexpr` values could crash (MLIR types cached from a dead context). Pass raw
-  `torch.Tensor` objects when you sweep constexprs.
 
 ## 4. Stale results
 

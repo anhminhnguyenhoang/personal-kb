@@ -64,8 +64,6 @@ pad = fx.make_layout((BM, BK), (BK + PAD, 1))                                  #
 ```
 
 - Because the swizzle is part of the view, writes and reads use the same transform.
-- Hand-written XOR on raw `SmemPtr` offsets (for example `col ^ ((row % k) << 4)` at 16-B
-  granularity) still works. You must then apply it on **both** the store and the load path.
 - Direct global→LDS DMA writes lane-contiguous addresses. It can break a swizzled layout
   that a register-staged store respects. Test each tile depth.
 - Layout rules: [layout-algebra §5](layout-algebra.md).
@@ -126,7 +124,7 @@ cur, aux, acc = unpack(res); acc = compute(cur, aux, acc)   # epilogue: last ite
   next to their use, the prefetch did not take effect.
 - Cost: each carried 16-B load = 4 VGPRs. Check the occupancy step first
   ([gfx942-registers-occupancy](../../hardware/amd-cdna/gfx942-registers-occupancy.md)). Do not
-  cap registers to make room (`maxnreg` is gone; forcing AGPRs off made MFMA kernels much slower).
+  cap registers to make room (forcing AGPRs off made MFMA kernels much slower).
 - Skip it when the loop is all loads with little compute, when MFMA use is already above 90 %,
   or when the kernel is at 1 wave and spilling.
 

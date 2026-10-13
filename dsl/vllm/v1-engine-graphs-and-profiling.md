@@ -1,21 +1,14 @@
 ---
 name: v1-engine-graphs-and-profiling
-description: "vLLM V0 vs V1: V0 is now an alias of V1. Covers the V1 process topology, CUDAGraphMode and its dispatcher, how graph mode changes trace interpretation, and the profiler endpoint chain."
+description: "vLLM V1 engine: process topology, CUDAGraphMode and its dispatcher, how graph mode changes trace interpretation, and the profiler endpoint chain."
 source: https://github.com/vllm-project/vllm (vllm/engine/llm_engine.py, vllm/v1/, vllm/config/compilation.py, vllm/v1/cudagraph_dispatcher.py)
 ---
 
 # vLLM V1 engine: graphs and profiling
 
-## V0 vs V1
+## Engine
 
-On current `main`, `vllm/engine/llm_engine.py` only aliases `vllm.v1.engine.llm_engine.LLMEngine`. `async_llm_engine.py` aliases `AsyncLLM` in the same way. **The V0 code is gone.** `VLLM_USE_V1=0` has no effect. Old guides that compare V0 and V1 describe behavior that no longer exists. The differences that still matter, when you read old numbers:
-
-| | V0 (historical) | V1 |
-| --- | --- | --- |
-| scheduler / executor | in the engine process | engine core in a separate process, connected by IPC |
-| workers | per-rank processes | one OS process per TP/PP rank |
-| graphs | decode-only capture | `CUDAGraphMode` (piecewise + full) with torch.compile |
-| profiler | engine-driven | in each worker process; one trace per rank |
+vLLM has one engine (V1): the engine core runs in a separate process connected by IPC, there is one OS process per TP/PP rank, graphs use `CUDAGraphMode` (piecewise + full) with torch.compile, and the profiler runs in each worker, one trace per rank.
 
 ## Process topology
 

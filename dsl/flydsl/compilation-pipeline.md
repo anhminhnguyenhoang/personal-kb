@@ -114,7 +114,6 @@ the MLIR→LLVM translation. A `-g` flag alone does nothing. Check: `.file` / `.
 | `compile_hints["llvm_options"]` | LLVM `cl::opt`s set in-process | live |
 | kernel / value attrs (`passthrough`) | raw `gpu.func` attributes | live |
 | anything via `gpu-module-to-binary opts=` | — | **dead on AMD**: ROCDL never reads it |
-| `maxnreg` | — | removed; now raises |
 | `FLYDSL_COMPILE_OPT_LEVEL` | — | in cache key, no consumer (`O=2` fixed) |
 
 - The hint dict has no whitelist. A misspelled key changes the cache key (a real recompile)
@@ -122,9 +121,7 @@ the MLIR→LLVM translation. A `-g` flag alone does nothing. Check: `.file` / `.
   IR check must then fail.
 - `waves_per_eu`: CDNA max is 8 waves/SIMD, gfx1250 max is 16. The same number means a
   different occupancy fraction per family.
-- `amdgpu-num-vgpr` (what `maxnreg` used to try to set) is deprecated in LLVM. On
-  gfx90a/gfx942/gfx950 it is a combined VGPR+AGPR budget, so N gives 2N registers. Use
-  `waves_per_eu` to target occupancy.
+- Target occupancy with `waves_per_eu`, not a register cap.
 - `@autotune(Config(...))`: plain kwargs become `Constexpr` args. Only `waves_per_eu` is
   forwarded as a compile hint. Set other hints around the tuned call with
   `CompilationContext.compile_hints({...})`. Results are cached as JSON under

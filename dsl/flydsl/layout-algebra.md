@@ -112,9 +112,7 @@ reads one whole chunk, so the vector width does not change.
   result). A swizzle attached to a *pointer* type (`apply_swizzle`) acts on the raw
   **byte address**. Re-derive the triple when you move it between these forms or change
   the element width.
-- Older docs say "no built-in swizzle; XOR by hand". Current source has `SwizzleType`
-  and composed layouts. The hand-written XOR (`col ^ ((row % k) << 4)`) still works on raw
-  offsets with `SmemPtr`.
+- Swizzle is built in: `SwizzleType` and composed layouts. Prefer it over hand-written XOR.
 
 ## 6. Preshuffle is a view, not a copy
 

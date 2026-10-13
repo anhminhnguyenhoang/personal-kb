@@ -1,6 +1,6 @@
 ---
 name: kernel-authoring-primitives
-description: "Map of FlyDSL authoring primitives — @kernel/@jit boundary types, copy and MMA atoms, tiled copy/MMA and the G→LDS→VGPR→MFMA→global chain, buffer tensors, LDS allocation (SharedAllocator vs legacy SmemAllocator), loops and branches."
+description: "Map of FlyDSL authoring primitives — @kernel/@jit boundary types, copy and MMA atoms, tiled copy/MMA and the G→LDS→VGPR→MFMA→global chain, buffer tensors, LDS allocation (SharedAllocator), loops and branches."
 source: https://github.com/ROCm/FlyDSL (docs/kernel_authoring_guide.md, docs/language/storage_and_allocator.md, docs/api_stability.md, examples/01-04, python/flydsl/expr/rocdl/*.py)
 ---
 
@@ -52,7 +52,7 @@ import flydsl.expr as fx
 | MMA fallback | `fx.rocdl.UniversalFMA(ty)` | scalar FMA |
 
 LDS DMA widths are 1/2/4 B on all targets, plus 12/16 B on gfx950. There is no 8-B
-form; `BufferCopyLDS64b` now raises because it once failed silently.
+form, and `BufferCopyLDS64b` raises.
 
 ## 3. Tiled ops and the operand chain
 
@@ -108,7 +108,6 @@ library (`kernels/common/buffer_ops.py`), not in `flydsl.expr`. Its offset is in
 | `fx.SharedAllocator(static=True)` | current | `allocate(T)` per buffer → `Storage[T]`; `.peek()` / `.poke(v)` |
 | `fx.SharedAllocator(static=False)` | current | compile-time offsets from one `get_dyn_shared` base |
 | `fx.get_dyn_shared(dtype)` + `make_view` | current | raw dynamic LDS; set `smem=` at launch |
-| `SmemAllocator` / `SmemPtr` (`flydsl.utils`) | **legacy**, warns | manual offsets, `finalize()` in GPU module body |
 
 ```python
 lds = fx.SharedAllocator().allocate(fx.Array[fx.Float16, TM * TN]).peek()

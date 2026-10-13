@@ -100,12 +100,6 @@ LDS per stage = (MPerBlock + NPerBlock) × KPerBlock × bytes
 - **Decode shape** (M ≪ N, K): small M tile (16/32), split-K, Interwave, 16×16 MFMA; or a
   flatmm-style kernel ([fused-moe-and-flatmm](fused-moe-and-flatmm.md)).
 
-## 6. Reference point
-
-bf16 4096³ RCR on MI300X, classic universal v3: tile 256×256×64, wave tile 32×32, wave map
-4×4, load vector 8×8, Intrawave, prefetch 2 → 0.223 ms, 615 TFLOP/s (Issue #1727). Use as
-a sanity anchor, not a target; pinned instances drift across CK releases.
-
 Sources: [A Block GEMM on MI300 (CK docs)](https://rocm.docs.amd.com/projects/composable_kernel/en/develop/conceptual/ck_tile/hardware/gemm_optimization.html) ·
 [ck_tile gemm pipelines](https://github.com/ROCm/composable_kernel/tree/develop/include/ck_tile/ops/gemm/pipeline) ·
 [Issue #1727](https://github.com/ROCm/composable_kernel/issues/1727) ·

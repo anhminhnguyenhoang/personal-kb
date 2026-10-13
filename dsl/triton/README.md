@@ -7,7 +7,7 @@ Upstream: [triton-lang/triton `third_party/amd`](https://github.com/triton-lang/
 ## Notes (reading order)
 
 - [scope-and-ceiling](scope-and-ceiling.md) — When to use Triton on AMD, NVIDIA habits to drop, and signs a kernel hit the compiler-scheduling ceiling.
-- [amd-knobs](amd-knobs.md) — AMD-only options (nonkdim, waves_per_eu, kpack, num_stages, knobs.amd): effect, start values, where to set, version drift.
+- [amd-knobs](amd-knobs.md) — AMD-only options (nonkdim, waves_per_eu, kpack, num_stages, knobs.amd): effect, start values, where to set.
 - [codegen-pipeline](codegen-pipeline.md) — TTIR to AMDGCN stages, layouts and convert_layout LDS cost, tl.dot to MFMA, the stream pipeliner.
 - [reading-amdgcn](reading-amdgcn.md) — Dump the ISA, read resource metadata, good-vs-bad inner-loop table, occupancy check for waves_per_eu.
 - [low-precision-dtypes](low-precision-dtypes.md) — FNUZ vs OCP fp8 per arch, scale placement, tl.dot_scaled MXFP4 and scale preshuffling on gfx950.

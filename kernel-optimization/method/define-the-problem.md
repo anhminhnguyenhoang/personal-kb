@@ -63,7 +63,7 @@ Decide what the kernel computes before deciding how it should run.
 - Always set a tolerance policy. A parity harness should encode per-op tolerances; the values we
   currently believe in are
   (elementwise linear ops bit-exact, silu/gelu `<= 2e-4`, layer/rms
-  norm `<= 5e-3` (was 2.5e-3 before noise widening), reduce `<= 1.5e-3`,
+  norm `<= 5e-3`, reduce `<= 1.5e-3`,
   gemm `<= 7e-2`).
 - For fp16 inputs with fp32 accumulation over O(100) terms, expect
   errors near the fp16 ULP floor for correct kernels. Errors two

@@ -44,7 +44,7 @@ source: CK DSL Optimization Runbook (ROCm/rocm-libraries@1efeadd, projects/compo
 - Collapse multiple waits where possible.
 - Avoid compiler-generated over-waiting by separating phases.
 - `lgkmcnt` is a 4-bit field on gfx9 (max 15). The immediate `20336`
-  (`0x4F70`) decodes to vmcnt 16, expcnt 7, lgkmcnt 15, not lgkmcnt 16;
+  (`0x4F70`) decodes to vmcnt 16, expcnt 7, lgkmcnt 15;
   decode immediates against the ISA field layout.
 
 ### 8.4 Scheduling Hints

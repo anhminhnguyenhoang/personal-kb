@@ -28,9 +28,7 @@ in granules (ISA: groups of 8 dwords).
 
 > **Same model on gfx950.** LLVM AMDGPUUsage treats gfx90a, gfx942 and gfx950
 > alike: one unified 512-entry vector file per SIMD. Registers used per wave are
-> `align(arch_vgprs, 4) + agprs`, allocated in granules of 8. An earlier KB note
-> modelled gfx950 AGPRs as a separate 256 file; [gfx950](gfx950.md) now uses the
-> unified model. ([LLVM AMDGPUUsage, `compute_pgm_rsrc1`](https://llvm.org/docs/AMDGPUUsage.html))
+> `align(arch_vgprs, 4) + agprs`, allocated in granules of 8. See [gfx950](gfx950.md). ([LLVM AMDGPUUsage, `compute_pgm_rsrc1`](https://llvm.org/docs/AMDGPUUsage.html))
 
 | Quantity | gfx942 (MI300X) value |
 |---|---|

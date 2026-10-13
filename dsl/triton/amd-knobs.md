@@ -42,9 +42,9 @@ triton.Config(
 | `num_warps` | 4 | 4 for GEMM/attention; 2–4 for memory-bound | One warp = one 64-lane wave. 8 copied from NVIDIA configs often spills VGPRs. |
 | `num_stages` | 2 | 2 single GEMM; 1 two fused GEMMs (attention); 2 GEMM+elementwise; 1 no GEMM | Extra stages cost LDS. On 64 KB LDS (gfx942) 3–4 stages cut occupancy. gfx950 (160 KB) can afford 3–4; benchmark. |
 | `matrix_instr_nonkdim` | 0 (compiler picks) | 16 | 16 → 16x16 MFMA. 32 → 32x32 MFMA, bigger accumulator per wave, needs BLOCK_M/N divisible by 32. AMD docs: 16 usually wins for GEMM on MI300X. |
-| `kpack` | 1 | 2 on gfx942 fp16/bf16, BLOCK_K ≥ 64 | Wider dot-operand LDS reads (`ds_read_b128`). Costs VGPRs. Deprecated on gfx950: forced to 1 with a warning. |
+| `kpack` | 1 | 2 on gfx942 fp16/bf16, BLOCK_K ≥ 64 | Wider dot-operand LDS reads (`ds_read_b128`). Costs VGPRs. Forced to 1 on gfx950. |
 | `waves_per_eu` | 0 (off) | 0, then 2–3 if VGPR-limited | Emits `amdgpu-waves-per-eu`. Use only when VGPR use is a little above an occupancy step. Too high → spills. |
-| `schedule_hint` | empty | empty | Experimental. Values change between releases (see below). |
+| `schedule_hint` | empty | empty | Experimental; only `mfma-schedule` (see below). |
 | `maxnreg` | none | none | Hard register cap. Rarely better than `waves_per_eu`. |
 
 ### waves_per_eu arithmetic
@@ -74,24 +74,18 @@ The full register model (unified VGPR+AGPR file on gfx942) is in
 |---|---|---|
 | `AMDGCN_ENABLE_DUMP=1` | print final AMDGCN | see [reading-amdgcn](reading-amdgcn.md) |
 | `MLIR_ENABLE_DUMP=1` | print IR after each pass | see layouts, LDS use |
-| `AMDGCN_USE_BUFFER_OPS` | lower loads/stores to `buffer_*` | on by default in current upstream; older builds had it off |
+| `AMDGCN_USE_BUFFER_OPS` | lower loads/stores to `buffer_*` | on by default |
 | `TRITON_HIP_USE_ASYNC_COPY` | direct global→LDS loads | default on gfx950, off on gfx942 |
 | `TRITON_HIP_USE_BLOCK_PINGPONG` | two warp groups alternate MFMA and memory | default on gfx942 (and gfx950 with async copy); needs `num_stages > 1` |
 | `TRITON_PRINT_AUTOTUNING=1` | print the winning config | use while tuning |
 | `TRITON_ALWAYS_COMPILE=1` | skip the kernel cache | use so dumps match the run |
 
-`OPTIMIZE_EPILOGUE=1` appears in older ROCm guides. Current upstream runs an epilogue-optimize
-pass always. Check your build before you rely on the env var.
+## Check the build you run
 
-## Version drift: check before use
+- `schedule_hint` accepts only `mfma-schedule` (gfx942/gfx950).
+- `allowed_dot_input_precisions` lists `ieee`, `bf16x3`, `bf16x6`.
 
-The option set moves fast. Examples seen in upstream history:
-- `schedule_hint` once took `attention` / `memory-bound-attention`; current main accepts only
-  `mfma-schedule` (gfx942/gfx950) and rejects other values.
-- Older ROCm forks used `instruction_sched_variant` instead.
-- `allowed_dot_input_precisions` now lists `ieee`, `bf16x3`, `bf16x6`.
-
-Always read `HIPOptions` and `knobs.amd` in the build you run.
+The option set moves fast: read `HIPOptions` and `knobs.amd` in your build.
 
 ## Ship the winner, not the autotuner
 

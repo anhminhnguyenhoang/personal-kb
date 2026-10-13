@@ -36,9 +36,7 @@ default: hipblaslt/asm if B is preshuffled, skinny for small-M default shapes, e
 
 Same pattern, wider key: `(gfx, cu_num, token bucket, model_dim, inter_dim, expert,
 topk, act_type, dtype, q_dtype_a, q_dtype_w, q_type, use_g1u1, doweight_stage1)`.
-A row names a **stage-1 and a stage-2 kernel** plus `block_m` and `ksplit`. Older CSVs
-have no `gfx` column; the merge back-fills it from `cu_num`. That back-fill cannot tell
-apart two archs with the same CU count, so regenerate on the target instead of relying on it.
+A row names a **stage-1 and a stage-2 kernel** plus `block_m` and `ksplit`. Generate tuned rows on the target arch: two archs can share a CU count.
 
 ## Config files and overrides
 
