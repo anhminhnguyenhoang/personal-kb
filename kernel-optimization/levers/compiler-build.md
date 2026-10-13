@@ -82,5 +82,10 @@ bottleneck class, and the kernel structure.
 
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#compiler-build).
 
+## Lessons from worked examples
+
+- **Run a negative control for every compile hint.** If hints are not whitelisted, a misspelled key still changes the cache key and forces a real recompile that changes nothing, which looks like a valid variant. Misspell the key on purpose and confirm your IR or ISA check fails. ([FlyDSL](https://github.com/ROCm/FlyDSL))
+- **Prefer `amdgpu-waves-per-eu` over a raw VGPR count.** On unified VGPR+AGPR targets (gfx90a, gfx942, gfx950) a per-function register cap is read against the combined file, so the same number means a different budget than on older parts. An occupancy target ports cleanly. ([LLVM AMDGPUUsage](https://llvm.org/docs/AMDGPUUsage.html)) Verify specifics against the primary source.
+
 ---
 Flag safety table: [knob-catalog-and-sweep](../../dsl/ck-dsl/knob-catalog-and-sweep.md). gfx950 compiler caveats: [target-architecture-gfx950](../../hardware/amd-cdna/gfx950.md). Anti-pattern (flags before ISA): [decision-heuristics](../failure-modes/decision-heuristics.md).

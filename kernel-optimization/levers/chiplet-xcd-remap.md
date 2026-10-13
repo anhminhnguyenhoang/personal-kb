@@ -181,6 +181,7 @@ Does the kernel read input data that could be reused across blocks?
 - **The remap needs more tiles than one chunk, and a chunk that fits the reuse window.** If `tiles ÷ chunk ≈ 1` the remap is a no-op and the entry-time index math is pure overhead (small loss). When it does help on a small shared operand, the best chunks are small: the chunk must be short enough that the shared operand's reuse stays inside one XCD's residency. Wider chunks regressed. Expect a modest gain (a few %) on bandwidth-bound shapes, and confirm it with paired repeats.
 
 - **Decouple the visiting index from the tile id in a persistent loop.** If the grid is a multiple of the XCD count, a block's XCD is fixed by its index, so group-major linear tile ids spread each group's tiles over all XCDs and the shared operand is fetched into every L2. Keep the strided loop variable (it maps to the XCD) separate from the tile id, then apply the chunked remap from visiting index to tile id so a run of consecutive tiles of one group lands on one XCD.
+- **Make the tile count a multiple of the XCD count, and give every XCD enough work.** Round-robin dispatch then splits the grid evenly over the chiplets, and no die finishes early. The MI300X tuning guide sets a floor of about 1024 workgroups for large GEMMs so every XCD and CU stays busy. A remap cannot fix a grid that is too small.
 
 ---
 Theory: [chiplet-scheduling](../../papers/hipkittens/01-paper/chiplet-scheduling.md). Interactive viz: [assets/remap_xcd_pid_grid.html](assets/remap_xcd_pid_grid.html)

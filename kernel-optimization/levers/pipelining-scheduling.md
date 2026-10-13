@@ -1,6 +1,6 @@
 ---
 name: pipelining-scheduling
-description: software pipeline (prologue/steady/epilogue, ping-pong, early-V), async copy and wait placement, waits/barriers, scheduling hints (silently dropped on gfx950), and instruction-level balance.
+description: software pipeline (prologue/steady/epilogue, ping-pong, early-V), async copy and wait placement, waits/barriers, scheduling hints (compile-time only, no ISA encoding), and instruction-level balance.
 source: CK DSL Optimization Runbook (ROCm/rocm-libraries@1efeadd, projects/composablekernel/python/ck_dsl/dsl_docs/optimization/optimization_runbook.md)
 ---
 
@@ -43,8 +43,9 @@ source: CK DSL Optimization Runbook (ROCm/rocm-libraries@1efeadd, projects/compo
 - Avoid barrier after direct global store unless needed.
 - Collapse multiple waits where possible.
 - Avoid compiler-generated over-waiting by separating phases.
-- The canonical `s_waitcnt(vmcnt=16, lgkmcnt=16)` encodes as the
-  immediate `20336`; cross-check in the lowered IR.
+- `lgkmcnt` is a 4-bit field on gfx9 (max 15). The immediate `20336`
+  (`0x4F70`) decodes to vmcnt 16, expcnt 7, lgkmcnt 15, not lgkmcnt 16;
+  decode immediates against the ISA field layout.
 
 ### 8.4 Scheduling Hints
 
@@ -58,11 +59,12 @@ source: CK DSL Optimization Runbook (ROCm/rocm-libraries@1efeadd, projects/compo
 - Some flags can break generated kernels even when they work for
   hand-written HIP.
 
-On gfx950 the LLVM backend silently removes explicit
-`s_sched_barrier` / `s_sched_group_barrier` instructions; verify with
-the ISA-inspection probe (the `sched_barrier` sub-bucket should be 0)
-or the intrinsic-count probe (`sched.barrier` / `sched.group.barrier`
-should be 0 after lowering on gfx950).
+`sched_barrier` / `sched_group_barrier` / `iglp_opt` are compiler
+scheduler directives with no ISA encoding on any arch (gfx942 and
+gfx950 alike). They appear only as `;` comments in the assembly, so a
+count of 0 in the final ISA is expected, not a sign they were dropped.
+Judge a hint by the instruction order it produces.
+([LLVM AMDGPUUsage](https://llvm.org/docs/AMDGPUUsage.html))
 
 ### 8.5 Instruction-Level Balance
 
@@ -81,9 +83,11 @@ should be 0 after lowering on gfx950).
 - **Scheduling-tier knobs do not compose into a structural win.** Pipeline variant, persistent grid and occupancy hints stacked on a bandwidth-bound kernel give noise. Persistent CTAs have nothing to amortize when there are only tens of tiles. Spend the effort on tile geometry and bytes moved first.
 
 - **A deeper buffer needs a pipeline that reads it, and one K-tile can break a 2-stage loop.** Allocating a third stage buffer is a no-op unless the pipeline actually cycles through it. A tile depth equal to the whole reduction (a single K-tile) can silently mis-accumulate in a 2-stage double-buffer epilogue. Cosine similarity hid a 123% relative error, so also check mean signed error.
+- **LDS size caps pipeline depth.** LDS use grows as tile bytes × stages. With 64 KB LDS (CDNA3), a GEMM tile typically fits 2 stages, and two fused GEMMs fit 1. With 160 KB (CDNA4), 3 to 4 stages fit. Size the stages before you tune the schedule. ([ROCm workload optimization](https://rocm.docs.amd.com/en/latest/how-to/rocm-for-ai/inference-optimization/workload.html))
+- **Issue the next phase's global loads before a barrier wait.** A wave stalled at `s_barrier` does no work, so loads issued just before it overlap that dead time almost for free. ([FlyDSL tuning guide](https://github.com/ROCm/FlyDSL))
+- **`vmcnt` counts in issue order, so moving a load moves every wait below it.** Hoisting a prefetch changes which load a later `vmcnt(N)` covers; recount each wait after the move. Scalar loads return out of order, so only `lgkmcnt(0)` is safe while SMEM loads are in flight. ([CDNA4 ISA](https://www.amd.com/content/dam/amd/en/documents/instinct-tech-docs/instruction-set-architectures/amd-instinct-cdna4-instruction-set-architecture.pdf), s_waitcnt)
 
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#pipelining-scheduling).
 
 ---
-Pipeline knobs (mem/compv3/compv4): [knob-catalog-and-sweep](../../dsl/ck-dsl/knob-catalog-and-sweep.md). Async DRAM->LDS contract: [memory-hierarchy](memory-hierarchy.md). gfx950 sched-barrier caveat: [target-architecture-gfx950](../../hardware/amd-cdna/gfx950.md).
-
+Pipeline knobs (mem/compv3/compv4): [knob-catalog-and-sweep](../../dsl/ck-dsl/knob-catalog-and-sweep.md). Async DRAM->LDS contract: [memory-hierarchy](memory-hierarchy.md). gfx950 compiler caveats: [target-architecture-gfx950](../../hardware/amd-cdna/gfx950.md).

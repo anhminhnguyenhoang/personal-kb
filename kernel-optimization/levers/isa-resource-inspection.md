@@ -80,6 +80,7 @@ faster on this shape?" — is for the targeted-bench probe.
 
 - **The per-iteration opcode histogram is the unit of design comparison.** Latency compresses differences. Counting opcodes per loop iteration (MFMA count and size, LDS writes, accumulator↔VGPR moves, cross-lane permutes, waits, barriers) makes a structural difference explicit. Count the reference's loop too; it shows what it does differently faster than inferring from counters.
 - **A change that does not move the hot-loop ISA changed nothing.** If the before/after loop bodies are identical, the "win" is noise (e.g. removing an LDS allocation the compiler had already eliminated). The same test catches a documented knob that no code reads: the binary and the lowered IR come out byte-equal with the flag on and off.
+- **Count layout conversions, not only loads.** A register-layout conversion that moves data across lanes lowers to an LDS write, a barrier, and an LDS read. Two conversions where one would do doubles that LDS traffic, so count them in the ISA. ([ROCm workload optimization](https://rocm.docs.amd.com/en/latest/how-to/rocm-for-ai/inference-optimization/workload.html))
 
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#isa-resource-inspection).
 

@@ -82,9 +82,11 @@ source: CK DSL Optimization Runbook (ROCm/rocm-libraries@1efeadd, projects/compo
 - **A harness that mis-sizes the dtype reports a correct kernel as broken.** A verify path that allocates fp16 buffers for a bf16 kernel gives huge diffs on every element (a false alarm). When the diff is absurd and uniform, validate the harness against a known-good result before debugging the kernel.
 
 - **No gain from freed VGPRs means the kernel is not occupancy-limited, and the binding resource is the one to shrink.** If cutting VGPRs adds no waves and no speed, VGPR is not the limit. LDS use is `max(staging, epilogue tile)`, so shrinking the smaller of the two changes nothing. To raise occupancy, shrink whichever resource actually sets the per-block footprint.
+- **A hardcoded shape constant faults when the kernel is re-instantiated.** A constant derived from one configuration (e.g. head count 128) baked into indexing reads or writes out of bounds when the same kernel runs at a smaller value (e.g. 16 heads under another parallel layout). Derive every such constant from the instantiation's parameters and re-run accuracy after each port.
+- **Atomic merges are not bitwise reproducible.** Float atomics add in arrival order, so results change run to run. For a deterministic reduction, write fp32 partials to fixed slots, sum them in a fixed order, then cast once. ([CK fmha_bwd convert_dq](https://github.com/ROCm/composable_kernel/tree/develop/example/ck_tile/01_fmha))
+- **fp16 atomic accumulation overflows on bf16-range data.** Packed half2 atomics saturate to ±inf when partial sums exceed fp16 range (max 65504), e.g. in a MoE top-k combine. Accumulate with f32 or bf16 atomics, or use a reduce pass. ([FlyDSL MoE 2-stage GEMM](https://github.com/ROCm/FlyDSL))
 
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#failure-modes).
 
 ---
 Heuristics for fixing each: [decision-heuristics](decision-heuristics.md). Tolerance signatures: [define-the-problem](../method/define-the-problem.md).
-

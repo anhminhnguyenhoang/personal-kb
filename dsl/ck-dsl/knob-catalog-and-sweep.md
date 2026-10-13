@@ -72,10 +72,10 @@ matches → zero re-pack. See §17.4 for the quantitative reduction.
 | `helpers/pipeline.py::SoftwarePipeline.run_ping_pong` | helper | — | Manual prologue / steady / epilogue staging when you author your own kernel |
 | `helpers/schedule.py::SchedulePolicy` | helper | — | Emit `sched_group_barrier(mask, count, sync_id)` + `s_setprio` hints |
 
-Caveat: explicit `s_sched_barrier` / `s_sched_group_barrier`
-intrinsics are silently dropped by the LLVM backend on gfx950
-(§3.1a / §8.4). Verify with `probe_isa_inspect.py` (`sched_barrier`
-sub-bucket should be 0).
+Caveat: `sched_barrier` / `sched_group_barrier` intrinsics are
+compiler directives with no ISA encoding on any arch, so the
+`sched_barrier` sub-bucket of `probe_isa_inspect.py` is always 0. Judge
+a hint by the instruction order it produces.
 
 #### 12.1.E Epilogue
 

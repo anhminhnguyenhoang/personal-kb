@@ -9,6 +9,7 @@ A DSL-neutral method for tuning GPU kernels. DSL-specific mappings live in [`../
 - [establish-baselines](method/establish-baselines.md) — Layered correctness gates, vendor baselines, benchmark hygiene, and metadata to record. Never report speed without correctness.
 - [measurement](method/measurement.md) — Benchmark discipline against an autotuned baseline: use min or p10, not median; cold versus hot L2; change one thing at a time.
 - [bottleneck-classification](method/bottleneck-classification.md) — Estimate arithmetic intensity, read profiler counters, use cheap static probes first, and sort kernels into compute, memory, sync, or launch bound.
+- [profiling-tiers](method/profiling-tiers.md) — Roofline target, timeline, PMC counters, PC sampling, thread trace: which question each tier answers, how to read SoL, when to stop.
 - [diagnostic-decision-tree](method/diagnostic-decision-tree.md) — One-page diagnostic tree and a symptom-to-action table. It points to the next note to read.
 
 ## levers
@@ -18,13 +19,16 @@ A DSL-neutral method for tuning GPU kernels. DSL-specific mappings live in [`../
 - [chiplet-xcd-remap](levers/chiplet-xcd-remap.md) — How a library's PID remap helpers map onto the HipKittens chiplet algorithm, the safe defaults, and the split-K gap.
 - [matrix-instructions](levers/matrix-instructions.md) — MFMA and WMMA atom choice, operand layout matching across chained atoms, accumulator strategy, and fewer MFMAs through K-pack.
 - [memory-hierarchy](levers/memory-hierarchy.md) — Registers, LDS, caches, and HBM; coalescing, async loads to LDS, double buffering, swizzle, and bank conflicts.
-- [pipelining-scheduling](levers/pipelining-scheduling.md) — Software pipelines, ping-pong, async copy and wait placement, barriers, and scheduling hints that gfx950 may drop.
+- [pipelining-scheduling](levers/pipelining-scheduling.md) — Software pipelines, ping-pong, async copy and wait placement, barriers, and compile-time scheduling hints.
 - [epilogue](levers/epilogue.md) — Epilogue ops, direct versus LDS epilogue trade-offs, and output validation. Vectorizing the epilogue is often the largest win.
+- [kernel-fusion](levers/kernel-fusion.md) — Fuse to cut HBM round-trips or hide work in a donor kernel; common patterns, and when fusion loses.
+- [numerical-stability](levers/numerical-stability.md) — fp32 accumulation, online softmax, Welford, the fp8 FNUZ vs OCP 2× trap, scale hygiene, fp32-reference validation.
 - [compiler-build](levers/compiler-build.md) — Build type, common HIP flags, DSL compiler hazards, and alias semantics. Flags rarely close gaps above 1%.
 - [isa-resource-inspection](levers/isa-resource-inspection.md) — Static IR and ISA analysis: what to count and extract (VGPR, SGPR, LDS, spills, occupancy), with a worked example.
 
 ## autotuning
 
+- [tuning-methodology](autotuning/tuning-methodology.md) — Per-shape tuning that reaches production: tuner tiers, exact lookup keys, shape capture, pruning, accuracy gates, re-tune triggers.
 - [op-specific-checklists](autotuning/op-specific-checklists.md) — Checklists for GEMM, convolution, attention, reduction, and fused ops: questions to ask before and during tuning.
 
 ## failure-modes

@@ -194,5 +194,9 @@ variant. Use rocprof to confirm, not to discover.
 
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#bottleneck-classification).
 
+## Lessons from worked examples
+
+- **Weight-streaming GEMM intensity is about 2·M ÷ bytes per weight.** When the weight matrix dominates traffic, FLOP per byte ≈ 2·M / (bytes per weight element). Compare it with the GPU's ridge point: decode with tens of tokens stays memory-bound even in fp8, so cut bytes, not FLOPs. ([Williams et al., Roofline](https://doi.org/10.1145/1498765.1498785))
+
 ---
 Then pick a lever family: [algorithmic-mapping](../levers/algorithmic-mapping.md), [memory-hierarchy](../levers/memory-hierarchy.md). Static probes how-to: [dsl-probe-workflow](../../dsl/ck-dsl/dsl-probe-workflow.md).

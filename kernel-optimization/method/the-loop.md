@@ -74,5 +74,10 @@ quantization support, and gfx950 compiler caveats.
 
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#the-loop).
 
+## Lessons from worked examples
+
+- **Start from the fastest correct reference, not a blank file.** A known-fast implementation already solves operand layout, LDS addressing and softmax precision. Writing from scratch spends days re-solving them. Rebuild the reference unchanged, prove it matches, then change one thing; keep from-scratch work for simple memory-bound kernels (elementwise, reductions).
+- **Fix a "done" bar before you start.** Compute the roofline target time for each stage, and stop when the kernel is within ~10% of it or every profiler signal sits at its algorithm-derived reference ([profiling-tiers](profiling-tiers.md)). Without a bar the loop never ends, or it ends at the first small win.
+
 ---
 Next: [define-the-problem](define-the-problem.md) · jump to [knob-catalog-and-sweep](../../dsl/ck-dsl/knob-catalog-and-sweep.md) for the lever menu · [reproducible-commands](../../dsl/ck-dsl/reproducible-commands.md).

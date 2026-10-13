@@ -177,7 +177,7 @@ Gather / scatter:
 - Count `ds_read` / `ds_write` → `probe_isa_inspect.py`; compare variants → `probe_intrinsic_counts.py`.
 - Store-width check → `probe_isa_inspect.py` (`buffer_store_dwordx2` / `_x4` vs `buffer_store_short`; `vmem_store` bucket).
 - Occupancy / LDS footprint → `probe_occupancy.py`, `analyze_hsaco`.
-- `sched_barrier` dropped on gfx950 → verify with `probe_isa_inspect.py`.
+- `sched_barrier` never appears in the ISA (any arch; it is a scheduler directive) → judge by instruction order.
 - Register tracking → `probe_occupancy.py`.
 - Read/write conflict asymmetry → `utilities/skills/empirical-case-studies.md` (Case Study 2).
 
@@ -212,7 +212,7 @@ Gather / scatter:
 - Ping-pong staging → `helpers/pipeline.py::SoftwarePipeline.run_ping_pong(...)`.
 - Async copy → `AsyncTileLoader` + `b.async_buffer_load_lds`.
 - Wait placement → `b.s_waitcnt(vmcnt=0)`.
-- `s_waitcnt(vmcnt=16, lgkmcnt=16)` encoded as constant `20336` in the DSL.
+- The DSL's `s_waitcnt` constant `20336` (`0x4F70`) decodes to vmcnt 16, lgkmcnt 15 (lgkmcnt is 4 bits on gfx9).
 - Wait / barrier counts → `probe_isa_inspect.py`.
 - Scheduling hints → `helpers/schedule.py::SchedulePolicy` (`sched_group_barrier(mask, count, sync_id)`, `s_setprio`, `s_waitcnt`).
 - Compare ISA with / without hints → `probe_isa_inspect.py`, `probe_intrinsic_counts.py` (`sched.barrier` / `sched.group.barrier` should be 0 on gfx950).
@@ -292,7 +292,7 @@ Gather / scatter:
 - XCD constants → `helpers/grid.py::NUM_XCDS_MI300X / MI325X / MI350X` (8 / 8 / 8); swizzle `chiplet_transform_chunked`; defaults `chiplet_wgm=8`, `chiplet_num_xcds=8`, `chiplet_chunk_size=64`.
 - Buffer resource → `b.buffer_rsrc(ptr, num_bytes)` (emits correct DW3).
 - LDS-load dword choice → `AsyncTileLoader.choose_dwords` (accepts `{4, 3, 1}`, not 2).
-- `s_waitcnt(vmcnt=16, lgkmcnt=16)` = `20336` → cross-check in the lowered IR.
+- `s_waitcnt` `20336` = vmcnt 16, lgkmcnt 15 → cross-check in the lowered IR.
 - fp8 / quant dtypes → `Type("fp8e4m3")`, `QDType="fp8e4m3"`; `Type("bf8e5m2")`, `QDType="bf8e5m2"`; `QDType="i8"`.
 - MX scale → `MxGemmSpec`, `helpers/mx_scale.py`; block-scale mantissa → `BlockScaleGemmSpec`, `MantissaDType`, `QuantMode`.
 - Native fp8 attention MFMA → `use_fp8_mfma_qk`, `use_fp8_mfma_pv` on `UnifiedAttention2DTiledSpec`.

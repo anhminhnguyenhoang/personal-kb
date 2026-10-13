@@ -239,11 +239,10 @@ else:
     benchmark_both()       # 96 KB <= LDS_b < 128 KB
 ```
 
-**gfx950 caveat**: Explicit scheduling barriers (`s_sched_barrier`,
-`s_sched_group_barrier`) are silently removed by the LLVM backend on
-gfx950. Verify with the ISA-inspection probe (the `sched_barrier`
-sub-bucket should be 0). Cannot rely on scheduling barriers to
-mitigate XOR overhead on gfx950.
+**Scheduling-barrier caveat**: `sched_barrier` / `sched_group_barrier`
+are compiler directives with no ISA encoding on any arch; they show up
+only as asm comments. Check whether a hint hid the XOR overhead by
+reading the instruction order, not by counting barriers in the ISA.
 
 Critical asymmetry: `ds_write_b128` has 32-dword conflict period
 while `ds_read_b128` has 64-dword period. Read and write conflict
@@ -285,9 +284,13 @@ the empirical case studies and
 - **Deep tiles hit an LDS-vs-occupancy frontier.** Per-WG footprint sets WGs/CU. Past the point where one more doubling drops WGs/CU (e.g. 2 → 1), the kernel turns latency-bound and gets slower, even if LDS still fits. Find the knee by sweeping depth, not by filling the LDS budget.
 
 - **Direct-to-LDS copy can silently break an XOR-swizzled layout.** At some tile depths the async copy's destination pattern does not match the swizzle, and results collapse (cosine near 0.1) until a plain layout is used. The plain layout then brings back bank conflicts. An immediate `vmcnt(0)` wait after the copy also gives up its latency hiding. Validate at every tile depth, and pair the copy with deferred waits.
+- **Load-to-LDS takes its LDS base from M0; advance it for every load.** The buffer/global load forms that write LDS use M0 as the wave's LDS base. If M0 is not updated between successive loads, later loads overwrite earlier slices. The bug can pass at small shapes and fail at larger ones (cosine ≈ 0.98), so test the largest tile count too.
+- **Padding must keep 16-byte alignment.** A pad that removes bank conflicts but breaks 16-byte row alignment makes the compiler split `ds_read_b128` / `ds_write_b128` into narrower ops. Pad by a multiple of 16 bytes (e.g. +8 bf16 elements) and check the ISA for the wide forms.
+- **Keep GEMM leading dimensions off multiples of 512 B.** Strides that are 512 B multiples map many rows to the same channel (the Tagram hotspot) and slow TN GEMM. Pad the leading dimension, e.g. `lda = ldb = K + 128` when `K % 256 == 0`. ([ROCm workload optimization](https://rocm.docs.amd.com/en/latest/how-to/rocm-for-ai/inference-optimization/workload.html))
+- **Use DPP or permlane for fixed-pattern wave reductions.** A shuffle-XOR butterfly lowers to `ds_bpermute`, which crosses the LDS crossbar and waits on `lgkmcnt`. DPP row/bank modifiers ride on a VALU op at no memory cost. ([CDNA3 ISA](https://www.amd.com/content/dam/amd/en/documents/instinct-tech-docs/instruction-set-architectures/amd-instinct-mi300-cdna3-instruction-set-architecture.pdf), DPP)
+- **Triage LDS stalls by where the stall sits.** Stall on the `ds_*` instruction itself: bank conflict, fix with swizzle or padding. Stall on `s_waitcnt lgkmcnt(0)` right after a `ds_write`: exposed latency, move the read later. A chain of `ds_bpermute` and barriers: cross-wave serialization, restructure the exchange. ([CDNA3 ISA](https://www.amd.com/content/dam/amd/en/documents/instinct-tech-docs/instruction-set-architectures/amd-instinct-mi300-cdna3-instruction-set-architecture.pdf), [FlyDSL tuning guide](https://github.com/ROCm/FlyDSL))
 
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#memory-hierarchy).
 
 ---
 Epilogue store path: [epilogue](epilogue.md). Async copy + pipeline: [pipelining-scheduling](pipelining-scheduling.md). LDS swizzle knobs: [knob-catalog-and-sweep](../../dsl/ck-dsl/knob-catalog-and-sweep.md); per-arch LDS table: [target-architecture-gfx950](../../hardware/amd-cdna/gfx950.md).
-

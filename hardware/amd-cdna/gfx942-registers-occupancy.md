@@ -1,6 +1,6 @@
 ---
 name: gfx942-registers-occupancy
-description: gfx942/CDNA3 (MI300X) per-SIMD register files (VGPR/AGPR/SGPR) and wave occupancy — the 512-total = 256 VGPR + 256 AGPR *flexible* split that differs from the gfx950 reference's separate-files model, the per-wave vs per-SIMD allocation arithmetic, and a worked occupancy example.
+description: gfx942/CDNA3 (MI300X) per-SIMD register files (VGPR/AGPR/SGPR) and wave occupancy — the 512-total = 256 VGPR + 256 AGPR *flexible* split (same on gfx950), the per-wave vs per-SIMD allocation arithmetic, and a worked occupancy example.
 source: AMD Instinct MI300 CDNA3 ISA Reference Guide (2025-08-05); gfx950.md and papers/hipkittens/01-paper/hipcc-agpr-pinning.md in this KB
 ---
 
@@ -26,22 +26,18 @@ vector registers per wave, split into up to 256 VGPR + up to 256 AGPR, with a
 *flexible* division when fewer than 512 total are needed**. VGPRs are allocated
 in granules (ISA: groups of 8 dwords).
 
-> ⚠️ **This differs from how the existing KB gfx950 reference models it.**
-> [gfx950](gfx950.md) lists
-> `VGPR/SIMD = 512` *and* `AGPR/SIMD = 256 (separate file)` — i.e. 512 + 256 as
-> two independent budgets. The CDNA3 ISA describes gfx942 as **512 total,
-> shared/flexible between the two pools (256 max each)**. For a *non-MFMA*
-> kernel (AGPR usage = 0), both models give the same VGPR headroom (512), so the
-> distinction only bites MFMA kernels that co-allocate VGPR+AGPR. Treat 512 as
-> the **combined** vector-register budget on gfx942 until verified otherwise on
-> the specific part with an occupancy probe or the `--save-temps` ISA.
+> **Same model on gfx950.** LLVM AMDGPUUsage treats gfx90a, gfx942 and gfx950
+> alike: one unified 512-entry vector file per SIMD. Registers used per wave are
+> `align(arch_vgprs, 4) + agprs`, allocated in granules of 8. An earlier KB note
+> modelled gfx950 AGPRs as a separate 256 file; [gfx950](gfx950.md) now uses the
+> unified model. ([LLVM AMDGPUUsage, `compute_pgm_rsrc1`](https://llvm.org/docs/AMDGPUUsage.html))
 
 | Quantity | gfx942 (MI300X) value |
 |---|---|
 | SIMDs / CU | 4 |
 | Vector regs / SIMD (per wave) | **512 total = ≤256 VGPR + ≤256 AGPR, flexible** |
 | SGPRs / CU | 800 (hardware); ~104 usable/wave |
-| VGPR allocation granularity | 8 dwords (ISA) — gfx950 ref cites 16; verify per target |
+| VGPR allocation granularity | 8 (ISA; LLVM AMDGPUUsage uses 8 for gfx90a/gfx942/gfx950) |
 | Waves / SIMD (hardware max) | 8 (⇒ 32 waves/CU) |
 | Wave size | 64 (wave64) |
 | LDS / CU | 64 KB (32 banks) |
@@ -86,6 +82,12 @@ occupancy higher.
 - "512" on gfx942 is the **combined** vector-register count (VGPR+AGPR), not
   VGPR-only and not V+A+S.
 
+## Lessons from worked examples
+
+- **The 64 KB LDS often binds before registers.** One workgroup with 48 KB of LDS gives 1 WG/CU on gfx942 whatever the VGPR count; the same kernel gets 3 WG/CU on gfx950's 160 KB. Compute the LDS limit first for attention kernels. Details: [lds-model-and-banks](lds-model-and-banks.md).
+- **MI325X is gfx942 with the same compute.** Same 304 CUs and 2.1 GHz peak; only HBM (256 GB, 6.0 TB/s) and power (1000 W) change. Re-tune memory-bound kernels only. Details: [cdna3-cdna4-deltas](cdna3-cdna4-deltas.md).
+
+---
 Related: [gfx950](gfx950.md)
 (gfx950/CDNA4 caps), [memory-hierarchy](../../kernel-optimization/levers/memory-hierarchy.md)
 (storage taxonomy), [hipcc-agpr-pinning](../../papers/hipkittens/01-paper/hipcc-agpr-pinning.md) (AGPR-as-MFMA-input

@@ -89,6 +89,8 @@ layout match, independent of the atom's compute throughput.
 ## Lessons from worked examples
 
 - **Prefer the K=32 bf16 atom on CDNA4.** The 16x16x32 bf16 atom keeps the same accumulators per lane as 16x16x16 but halves the MFMA issue count, and the result is bit-exact. It is an issue-efficiency win, not an occupancy win. CDNA3 lacks it and falls back to 16x16x16. It needs a K-permute change in the operand layout so each lane holds 8 contiguous K elements (e.g. +4-7% on a memory-bound grouped GEMM).
+- **Preshuffle block scales to match the lane layout.** A scaled MFMA lane needs several scale bytes that are strided in a row-major scale tensor, which gives narrow loads and extra waits. Store the scales offline in lane order so each lane reads them in one load. ([Triton block-scaled matmul tutorial](https://github.com/triton-lang/triton/blob/main/python/tutorials/10-block-scaled-matmul.py))
+- **MFMA result wait states scale with pass count.** Before any consumer other than a same-accumulator MFMA reads D, the ISA requires about 5/8/12/20 wait states for 2/4/8/16-pass MFMAs. Back-to-back accumulation into the same D needs none. Fill the gap with independent work instead of blanket `s_nop`. ([CDNA4 ISA](https://www.amd.com/content/dam/amd/en/documents/instinct-tech-docs/instruction-set-architectures/amd-instinct-cdna4-instruction-set-architecture.pdf), MFMA dependency table) Verify specifics against the primary source.
 
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#matrix-instructions).
 

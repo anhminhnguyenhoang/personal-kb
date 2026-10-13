@@ -39,9 +39,8 @@ For a new kernel or a regression:
    `probe_isa_inspect.py` to see the post-codegen instruction mix.
    This is where you confirm that vector stores actually emit
    `buffer_store_dwordx{2,4}` (and not `buffer_store_short`), that
-   the cshuffle epilogue is using wide stores, and that
-   `s_sched_barrier` was silently removed on gfx950 (it always is —
-   see Section 8.4).
+   the cshuffle epilogue is using wide stores. (Sched barriers never
+   appear in the ISA on any arch; they are scheduler directives.)
 5. **Lowering parity check (only if HIP debug parity is failing)**.
    Run `probe_lowering_compare.py` — if the HSACO sizes diverge >2×
    or the VGPR/LDS deltas are large, one backend is missing an op

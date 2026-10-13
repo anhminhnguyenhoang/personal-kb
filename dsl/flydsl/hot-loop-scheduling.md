@@ -73,9 +73,9 @@ Autotuning = ② and ③ done automatically, thousands of times.
 4. Can't hand-pick one ratio → compute it from tile sizes + autotune.
 5. Always re-measure; a "smart" schedule that's slower is a bug.
 
-> gfx950 caveat: the LLVM backend can silently drop explicit
-> `s_sched_barrier` / `s_sched_group_barrier`; verify they survived lowering
-> before trusting a hint. See
+> Caveat: `sched_barrier` / `sched_group_barrier` have no ISA encoding on any
+> arch; they print only as asm comments. Judge a hint by the instruction order
+> it produces, not by finding barriers in the ISA. See
 > [pipelining-scheduling](../../kernel-optimization/levers/pipelining-scheduling.md).
 
 ---

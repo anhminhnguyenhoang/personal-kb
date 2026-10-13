@@ -78,5 +78,9 @@ change a win.
 
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#epilogue).
 
+## Lessons from worked examples
+
+- **Fold dequant scales into a multiply you already do.** Fold per-tensor descales into the softmax scale, or apply group scales in the accumulate step (`c += c_tmp·sa·sb`). Never materialize dequantized operands. ([ck_tile gemm_quant](https://github.com/ROCm/composable_kernel/tree/develop/include/ck_tile/ops/gemm_quant))
+
 ---
 Epilogue knobs: [knob-catalog-and-sweep](../../dsl/ck-dsl/knob-catalog-and-sweep.md). ISA store-width check: [isa-resource-inspection](isa-resource-inspection.md).

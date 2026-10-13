@@ -198,9 +198,10 @@ sub-tile transpose, N-D permutation, and im2col copy.
 
 - **Split-K does not help when the large operand has no cross-CTA reuse.** Splitting K spreads the same bytes over more CTAs and adds a reduce, but each CTA still streams unique weight bytes. Total traffic is unchanged (or grows if the small operand is replicated) while the kernel is already at the bandwidth ceiling. Use split-K to fix under-filled grids, not to raise bandwidth.
 - **Fuse to remove HBM round-trips, not launches.** Eager launch and graph replay differ by only a few µs on large-enough kernels, so fewer launches buys little. Fusing neighbouring ops (gate/up/activation/down/reduce, or a GEMM with its consumer) pays because intermediates stay in registers instead of crossing HBM.
+- **Skip fully masked tiles, mask only the edges.** For each query tile, compute the KV-tile range the mask (causal, sliding window) allows and never load the rest. Apply the per-element mask only on the boundary tiles; interior tiles run unmasked. ([ck_tile fmha](https://github.com/ROCm/composable_kernel/tree/develop/include/ck_tile/ops/fmha))
+- **Merge split partial attention results through LSE.** Each split writes its partial O and log-sum-exp. Combine with `LSE = m + log Σ exp(LSE_i − m)` and `O = Σ exp(LSE_i − LSE)·O_i`, where `m = max LSE_i`. This makes split-KV exact. ([FlashAttention-2](https://arxiv.org/abs/2307.08691))
 
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#algorithmic-mapping).
 
 ---
 Next: [work-decomposition](work-decomposition.md). Per-family variant levers: [knob-catalog-and-sweep](../../dsl/ck-dsl/knob-catalog-and-sweep.md). Op checklists: [op-specific-checklists](../autotuning/op-specific-checklists.md).
-
