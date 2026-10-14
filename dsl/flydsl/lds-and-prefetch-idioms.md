@@ -96,9 +96,9 @@ hides little latency on its own.
 ## 6. Register prefetch with loop-carried state
 
 For loops with no LDS stage (paged-KV decode, gathers), prefetch into registers with
-`range(..., init=[...])` carried state. The pattern (prologue, loads-first body, `yield`,
-epilogue) is in [flydsl-kernel-authoring](https://github.com/ROCm/FlyDSL/tree/main/.claude/skills/flydsl-kernel-authoring) §3 "Runtime Loops with Loop-Carried Values". An unrolled
-`data = next_data` swap does not work ([pitfalls §1](pitfalls.md)). What the skill does not say:
+`range(..., init=[...])` carried state: prologue loads, loads-first body, `yield`, epilogue.
+An unrolled
+`data = next_data` swap does not work ([pitfalls §1](pitfalls.md)). Rules:
 
 - Carry **everything** the next iteration needs: payload, block-table entries, page ids,
   scales, running max/sum. A load that depends on another load (table → page) stays in

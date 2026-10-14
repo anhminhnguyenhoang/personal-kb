@@ -1,15 +1,10 @@
 ---
 name: kernel-authoring-primitives
-description: "FlyDSL authoring details the skills lack: host-built tiled atoms, atoms beyond the skill catalog, the example-04 G→LDS→MFMA→global operand chain, and the API-stability boundary. API surface lives in the FlyDSL skills."
+description: "FlyDSL authoring details: host-built tiled atoms, LDS-DMA/async/transpose/atomic atoms, the example-04 G→LDS→MFMA→global operand chain, and the API-stability boundary."
 source: https://github.com/ROCm/FlyDSL (docs/kernel_authoring_guide.md, docs/language/storage_and_allocator.md, docs/api_stability.md, examples/01-04, python/flydsl/expr/rocdl/*.py)
 ---
 
 # FlyDSL kernel-authoring primitives
-
-The API surface (decorators, boundary types, layout ops, copy/MMA atoms, buffer tensors,
-`SharedAllocator`, control flow, scalar/vector types, waits, reductions) lives in the
-[flydsl-kernel-authoring](https://github.com/ROCm/FlyDSL/tree/main/.claude/skills/flydsl-kernel-authoring) skill, the step-by-step procedure in [flydsl-tile-programming](https://github.com/ROCm/FlyDSL/tree/main/.claude/skills/flydsl-tile-programming), and legacy→current API migration in
-[flydsl-kernel-code-cleanup](https://github.com/ROCm/aiter/tree/main/.claude/skills/flydsl-kernel-code-cleanup). Those track the repo; read them for spellings. This note keeps only what they lack.
 
 ## 1. Build tiled atoms on the host
 
@@ -18,7 +13,7 @@ The API surface (decorators, boundary types, layout ops, copy/MMA atoms, buffer 
 - `known_block_size=[x,y,z]` on `@flyc.kernel` feeds `max_flat_workgroup_size`. Set it when
   launch dims are dynamic, or the backend falls back to its default work-group bound.
 
-## 2. Atoms beyond the skill catalog
+## 2. Less common atoms
 
 | Kind | Atom | Notes |
 |---|---|---|

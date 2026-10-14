@@ -2,14 +2,12 @@
 
 FlyDSL is a Python DSL for AMD GPU kernels ([ROCm/FlyDSL](https://github.com/ROCm/FlyDSL)). It uses CuTe-style layouts and an MLIR Fly → ROCDL → HSACO pipeline. The general method is in [`../../kernel-optimization/`](../../kernel-optimization/README.md).
 
-**API reference lives in the upstream skills**, which track the repo: [flydsl-kernel-authoring](https://github.com/ROCm/FlyDSL/tree/main/.claude/skills/flydsl-kernel-authoring) (API surface), [flydsl-tile-programming](https://github.com/ROCm/FlyDSL/tree/main/.claude/skills/flydsl-tile-programming) (write-a-kernel procedure), [flydsl-kernel-code-cleanup](https://github.com/ROCm/aiter/tree/main/.claude/skills/flydsl-kernel-code-cleanup) (legacy→current migration). These notes keep only concepts and lessons the skills do not hold.
-
 Reading order:
 
 - [layout-algebra](layout-algebra.md) — CuTe layouts in FlyDSL: shape:stride, the four divides, TV layouts, swizzle as a composed layout, preshuffle as a view.
-- [kernel-authoring-primitives](kernel-authoring-primitives.md) — Host-built tiled atoms, atoms beyond the skill catalog, the example-04 operand chain, API stability.
+- [kernel-authoring-primitives](kernel-authoring-primitives.md) — Host-built tiled atoms, less common atoms, the example-04 operand chain, API stability.
 - [compilation-pipeline](compilation-pipeline.md) — What the JIT cache key misses, which dump file answers which question, which hint lanes reach LLVM.
-- [pitfalls](pitfalls.md) — Traps the skills do not list: unrolled-alias prefetch, MFMA operand order, strided torch views, hangs, an isolation workflow.
+- [pitfalls](pitfalls.md) — Unrolled-alias prefetch, MFMA operand order, strided torch views, hangs, an isolation workflow.
 - [lds-and-prefetch-idioms](lds-and-prefetch-idioms.md) — Ping-pong LDS as a layout mode, swizzle/padding layouts, G→LDS atoms, loop-carried register prefetch and its ISA check.
 - [hot-loop-scheduling](hot-loop-scheduling.md) — How to tell if a hot-loop `sched_*` schedule works: the measure, diagnose, re-measure loop and the roofline gate.
 - [operator-recipes](operator-recipes.md) — Preshuffle GEMM tile algebra and data paths, two-stage fused MoE (gate modes, split-K, combine modes), wave64 block reduction.

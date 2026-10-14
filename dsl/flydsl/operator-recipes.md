@@ -122,7 +122,7 @@ kernels, not hgemm.
 
 ## C. Block reduction (norm / softmax building block)
 
-The wave-shuffle + LDS block reduction is in [flydsl-kernel-authoring](https://github.com/ROCm/FlyDSL/tree/main/.claude/skills/flydsl-kernel-authoring) §7. Two rules it leaves out:
+Wave xor-shuffle, then lane 0 of each wave to LDS, barrier, wave 0 reduces the partials.
 
 - Two barriers per reduction. Fuse max and sum into one pass (online softmax) to halve them.
 - Padding lanes must hold the **identity** (`-inf` for max, `0` for sum).

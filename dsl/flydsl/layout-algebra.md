@@ -30,9 +30,9 @@ All `fx.*` layout calls emit IR. Call them inside `@flyc.kernel` or `@flyc.jit`.
 
 ## 2. Operations
 
-The op list (`composition`, `complement`, `coalesce`, `right_inverse`, `recast_layout`, products,
-divides, `select`/`group`/`slice`) is in [flydsl-kernel-authoring](https://github.com/ROCm/FlyDSL/tree/main/.claude/skills/flydsl-kernel-authoring) §2. The sections below explain the parts the
-list does not: how divides group modes, how TV layouts and swizzles behave.
+Ops: `composition`, `complement`, `coalesce`, `right_inverse`, `recast_layout`, products,
+divides, `select`/`group`/`slice`. The sections below explain how divides group modes and how
+TV layouts and swizzles behave.
 
 ## 3. Divides: same tiles, different mode order
 
@@ -129,7 +129,7 @@ you get plain B. The MFMA K-fragment layout stays the same
 
 ## 7. Static vs dynamic shapes
 
-`mark_layout_dynamic(leading_dim=, divisibility=)` ([flydsl-kernel-authoring](https://github.com/ROCm/FlyDSL/tree/main/.claude/skills/flydsl-kernel-authoring) §10): the divisibility promise is in
+`flyc.from_dlpack(t).mark_layout_dynamic(leading_dim=, divisibility=)`: the divisibility promise is in
 the cache key and keeps 128-bit accesses on a runtime shape. Without it, every shape is a new
 compile (static) or a slow path (unknown alignment).
 

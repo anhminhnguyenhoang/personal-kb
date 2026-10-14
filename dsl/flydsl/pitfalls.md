@@ -1,16 +1,14 @@
 ---
 name: pitfalls
-description: "FlyDSL traps the skills do not list: unrolled-alias prefetch, SSA list indexing, MFMA operand order, strided torch views, stale cache, hangs, and an isolation workflow for wrong numbers."
-source: https://github.com/ROCm/FlyDSL (.claude/skills/debug-flydsl-kernel/SKILL.md, .claude/skills/flydsl-kernel-authoring/SKILL.md, docs/kernel_tuning_guide.md, python/flydsl/compiler/ast_rewriter.py)
+description: "FlyDSL traps: unrolled-alias prefetch, SSA list indexing, MFMA operand order, strided torch views, stale cache, hangs, and an isolation workflow for wrong numbers."
+source: https://github.com/ROCm/FlyDSL (.claude/skills/debug-flydsl-kernel/SKILL.md, docs/kernel_tuning_guide.md, python/flydsl/compiler/ast_rewriter.py)
 ---
 
 # FlyDSL pitfalls
 
 ## 1. Trace time vs run time, and loops
 
-`const_expr` rules, closure writes, branch-local definitions, early `return`, local `@flyc.jit`
-dispatch, loop-bound types and `init=`/`yield` state are in [flydsl-kernel-authoring](https://github.com/ROCm/FlyDSL/tree/main/.claude/skills/flydsl-kernel-authoring) §3 and [flydsl-kernel-code-cleanup](https://github.com/ROCm/aiter/tree/main/.claude/skills/flydsl-kernel-code-cleanup) §3 and §5.
-Two traps they do not list:
+Two traps:
 
 - `for i in range(4): lst[i]` makes `i` SSA, which cannot index a Python list. Use
   `fx.range_constexpr(4)`.
@@ -61,7 +59,7 @@ Clues from how the output looks:
 | NaN only on masked rows | `exp(-inf - (-inf))`. Guard the max with `select(max > -inf, diff, 0)` and the sum with `select(sum > 0, sum, 1)` |
 | "close but low SNR" softmax | log-sum-exp in a different domain (natural log vs scaled log2) from the reference |
 
-Sources: [ROCm/FlyDSL](https://github.com/ROCm/FlyDSL) — `.claude/skills/debug-flydsl-kernel/SKILL.md`, `.claude/skills/flydsl-kernel-authoring/SKILL.md`, `docs/kernel_tuning_guide.md`, `docs/architecture_guide.md`, `python/flydsl/compiler/ast_rewriter.py` (`scf_range`, `_transform_for_auto`, `scf_for_dispatch`); [PyTorch `Tensor.clone`](https://pytorch.org/docs/stable/generated/torch.clone.html) (`memory_format=torch.preserve_format`).
+Sources: [ROCm/FlyDSL](https://github.com/ROCm/FlyDSL) — `.claude/skills/debug-flydsl-kernel/SKILL.md`, `docs/kernel_tuning_guide.md`, `docs/architecture_guide.md`, `python/flydsl/compiler/ast_rewriter.py` (`scf_range`, `_transform_for_auto`, `scf_for_dispatch`); [PyTorch `Tensor.clone`](https://pytorch.org/docs/stable/generated/torch.clone.html) (`memory_format=torch.preserve_format`).
 Paths drift; verify before use.
 
 ---

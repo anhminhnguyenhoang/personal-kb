@@ -1,6 +1,6 @@
 ---
 name: compilation-pipeline
-description: "FlyDSL compile details the skills lack: what the JIT cache key and fingerprint miss, which dump file answers which question, and which compile-hint lanes reach LLVM."
+description: "FlyDSL compile details: what the JIT cache key and fingerprint miss, which dump file answers which question, and which compile-hint lanes reach LLVM."
 source: https://github.com/ROCm/FlyDSL (python/flydsl/compiler/backends/rocm.py, jit_function.py, ast_rewriter.py, utils/env.py, docs/architecture_guide.md, .claude/skills/llvm/SKILL.md); https://llvm.org/docs/AMDGPUUsage.html
 ---
 
@@ -8,9 +8,8 @@ source: https://github.com/ROCm/FlyDSL (python/flydsl/compiler/backends/rocm.py,
 
 ## 1. Pipeline and passes
 
-The stack (AST rewrite → tracing → Fly→ROCDL→LLVM passes → HSACO) and the key passes are in
-[flydsl-kernel-authoring](https://github.com/ROCm/FlyDSL/tree/main/.claude/skills/flydsl-kernel-authoring) §1. The exact pass list changes between releases: read `RocmBackend._pipeline_parts`
-in your checkout.
+AST rewrite → tracing → Fly→ROCDL→LLVM passes → HSACO. The exact pass list changes between
+releases: read `RocmBackend._pipeline_parts` in your checkout.
 
 ## 2. JIT cache: what invalidates and what does not
 
@@ -59,7 +58,7 @@ What to check in which file:
 
 The dumped `.ll` has no target triple or CPU. Always pass both to `llc`.
 
-Source-line info for ATT traces (`FLYDSL_DEBUG_ENABLE_DEBUG_INFO`, the DI-scope pass): [flydsl-kernel-authoring](https://github.com/ROCm/FlyDSL/tree/main/.claude/skills/flydsl-kernel-authoring) §9.
+Source lines for ATT traces: `FLYDSL_DEBUG_ENABLE_DEBUG_INFO=1`; check `.file` / `.loc` in `final_isa.s`.
 
 ## 4. Which knobs reach LLVM
 
@@ -74,7 +73,8 @@ Source-line info for ATT traces (`FLYDSL_DEBUG_ENABLE_DEBUG_INFO`, the DI-scope 
 - The hint dict has no whitelist. A misspelled key changes the cache key (a real recompile)
   but does nothing else. Always run a **negative control**: misspell the key on purpose. Your
   IR check must then fail.
-- `waves_per_eu`, the dead `opts=` lane, `maxnreg`, and `@autotune`: [flydsl-kernel-authoring](https://github.com/ROCm/FlyDSL/tree/main/.claude/skills/flydsl-kernel-authoring) §9.
+- `waves_per_eu` reaches LLVM as the `amdgpu-waves-per-eu` attribute. Anything passed through
+  `gpu-module-to-binary opts=` is dropped on AMD.
 - `@autotune(Config(...))` forwards only `waves_per_eu` as a hint. Set other hints around the
   tuned call with `CompilationContext.compile_hints({...})`.
 

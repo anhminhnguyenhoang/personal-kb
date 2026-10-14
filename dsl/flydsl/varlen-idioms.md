@@ -65,7 +65,7 @@ gA_k  = fx.flat_divide(A_buf, (BLOCK_M, BLOCK_K))[None, None, block_m_idx, None]
 
 ## 3. Runtime early-exit — positive guard, never bare `return`
 
-Wrap the whole body in one positive runtime guard (no early `return`; rules in [flydsl-kernel-authoring](https://github.com/ROCm/FlyDSL/tree/main/.claude/skills/flydsl-kernel-authoring) §3):
+Wrap the whole body in one positive runtime guard (no early `return`):
 
 ```python
 if start_m < M_b:        # runtime → scf.if guarding all compute + store
@@ -122,8 +122,8 @@ When the tile body lives inside an `scf.for` persistent loop:
   merely read inside, the DSL auto-promotes them to `scf.for` iter_args (block
   args), and the gemm-op lowering's `getDefiningOp<MakeTiledMma>` then fails. They
   are loop-invariant, so LICM can still hoist the cheap setup later.
-- LDS views inside the loop: use `fx.SharedAllocator` ([flydsl-kernel-code-cleanup](https://github.com/ROCm/aiter/tree/main/.claude/skills/flydsl-kernel-code-cleanup) §4 covers the legacy `SmemPtr`
-  cached-view dominance error).
+- LDS views inside the loop: use `fx.SharedAllocator`, not the legacy `SmemPtr` (its cached view
+  caused a dominance error across iterations).
 
 ---
 Related: [measurement](../../kernel-optimization/method/measurement.md) · [hot-loop-scheduling](hot-loop-scheduling.md) · [work-decomposition](../../kernel-optimization/levers/work-decomposition.md)
