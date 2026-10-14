@@ -28,15 +28,11 @@ All `fx.*` layout calls emit IR. Call them inside `@flyc.kernel` or `@flyc.jit`.
 - `make_ordered_layout(shape, order)` builds a compact layout from a stride order.
   `order=(1,0)` = row-major for 2-D.
 
-## 2. Algebra operations (the ones you use)
+## 2. Operations
 
-| Op | Meaning | Typical use |
-|---|---|---|
-| `composition(A, B)` | `x → A(B(x))` | reorder / permute a memory layout |
-| `complement(L, M)` | modes that fill `[0, M)` beside `L` | internal to divide |
-| `coalesce(L)` | merge contiguous modes, same function | simplify before reasoning |
-| `right_inverse(L)` | pseudo-inverse | build TV mappings |
-| `recast_layout(L, old_bits, new_bits)` | re-express for a new element width | f16 view → packed i32 / fp8 view |
+The op list (`composition`, `complement`, `coalesce`, `right_inverse`, `recast_layout`, products,
+divides, `select`/`group`/`slice`) is in [flydsl-kernel-authoring](https://github.com/ROCm/FlyDSL/tree/main/.claude/skills/flydsl-kernel-authoring) §2. The sections below explain the parts the
+list does not: how divides group modes, how TV layouts and swizzles behave.
 
 ## 3. Divides: same tiles, different mode order
 
@@ -131,12 +127,11 @@ The tiled-copy and MMA code does not change. Only this view changes. Remove the 
 you get plain B. The MFMA K-fragment layout stays the same
 ([varlen-idioms §5](varlen-idioms.md)).
 
-## 7. Static vs dynamic shapes at the boundary
+## 7. Static vs dynamic shapes
 
-`flyc.from_dlpack(t).mark_layout_dynamic(leading_dim=1, divisibility=16)` makes the shape
-dynamic but promises alignment. The promise is in the JIT cache key. It lets the compiler
-keep 128-bit accesses on a runtime shape. If you do not mark it, every new shape is a
-new compile (static) or a slow path (unknown alignment).
+`mark_layout_dynamic(leading_dim=, divisibility=)` ([flydsl-kernel-authoring](https://github.com/ROCm/FlyDSL/tree/main/.claude/skills/flydsl-kernel-authoring) §10): the divisibility promise is in
+the cache key and keeps 128-bit accesses on a runtime shape. Without it, every shape is a new
+compile (static) or a slow path (unknown alignment).
 
 Sources: [ROCm/FlyDSL](https://github.com/ROCm/FlyDSL) — `docs/cute_layout_algebra_guide.md`, `docs/layout_system_guide.md`, `python/flydsl/expr/primitive.py`, `include/flydsl/Dialect/Fly/Utils/LayoutUtils.h` (`layoutCrd2Idx`), `lib/Dialect/Fly/Utils/PointerUtils.cpp` (`applySwizzleOnPtr`), `examples/04-preshuffle_gemm.py`, `examples/notebooks/04_layout.ipynb`, `examples/notebooks/05_tiled_copy_and_swizzle.ipynb`; [CUTLASS CuTe](https://github.com/NVIDIA/cutlass/tree/main/include/cute) — `layout.hpp`, `swizzle.hpp`; PyCute reference `torch/distributed/_pycute/layout.py` ([pytorch/pytorch](https://github.com/pytorch/pytorch)).
 Paths drift; verify before use.

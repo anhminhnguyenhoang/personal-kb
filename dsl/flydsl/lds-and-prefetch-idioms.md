@@ -13,13 +13,9 @@ This note shows how to write it in FlyDSL.
 
 ## 1. First, name the LDS problem
 
-| ATT / ISA shows | Problem | FlyDSL fix |
-|---|---|---|
-| stall on the `ds_read_*` / `ds_write_*` itself | bank conflict | swizzled or padded LDS layout (§3) |
-| stall on `s_waitcnt lgkmcnt(0)` just after a `ds_write` | write→read latency exposed | move independent work between store and barrier (§4) |
-| chains of `ds_bpermute → lgkmcnt → s_barrier` in a reduce | cross-wave serialization | fewer barrier stages; merge max+sum passes; wave shuffles first |
-
-Each problem has its own fix. Do not treat every LDS stall as a swizzle problem.
+Triage the stall before picking a fix (bank conflict vs exposed latency vs cross-wave
+serialization): [memory-hierarchy](../../kernel-optimization/levers/memory-hierarchy.md),
+lessons section.
 
 ## 2. Ping-pong = one extra layout mode
 
@@ -99,20 +95,10 @@ hides little latency on its own.
 
 ## 6. Register prefetch with loop-carried state
 
-For loops with no LDS stage (paged-KV decode, gathers), you prefetch into registers. An
-unrolled `data = next_data` swap is invisible to MLIR ([pitfalls §2](pitfalls.md)). You need
-real `scf.for` carried values:
-
-```python
-nxt = issue_loads(0)                                   # prologue: iteration 0
-init = pack(nxt, aux0, acc0)                           # aux = block ids, page offsets, scales
-for iv, st in range(fx.Int32(0), fx.Int32(N - 1), fx.Int32(1), init=init):
-    cur, aux, acc = unpack(st)                         # swap = unpack only, no math
-    nxt = issue_loads(iv + 1)                          # next loads FIRST (async)
-    acc = compute(cur, aux, acc)                       # overlaps the in-flight loads
-    res = yield pack(nxt, next_aux, acc)
-cur, aux, acc = unpack(res); acc = compute(cur, aux, acc)   # epilogue: last iteration
-```
+For loops with no LDS stage (paged-KV decode, gathers), prefetch into registers with
+`range(..., init=[...])` carried state. The pattern (prologue, loads-first body, `yield`,
+epilogue) is in [flydsl-kernel-authoring](https://github.com/ROCm/FlyDSL/tree/main/.claude/skills/flydsl-kernel-authoring) §3 "Runtime Loops with Loop-Carried Values". An unrolled
+`data = next_data` swap does not work ([pitfalls §1](pitfalls.md)). What the skill does not say:
 
 - Carry **everything** the next iteration needs: payload, block-table entries, page ids,
   scales, running max/sum. A load that depends on another load (table → page) stays in

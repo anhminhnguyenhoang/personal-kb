@@ -28,8 +28,7 @@ Example: 64×256×128 fp8, `K_mfma = 32` → 4 · 4 · 4 = 64 MFMAs per tile, 64
 
 ### Constraints
 
-- `tile_m % 16 == 0`, `tile_n % 64 == 0`, `tile_k · elem_bytes % 64 == 0`. For a preshuffled B,
-  `tile_k` must divide K.
+- `tile_m % 16 == 0`, `tile_n % 64 == 0`. For a preshuffled B, `tile_k` must divide K.
 - LDS ≈ `stages · tile_m · tile_k · elem_bytes` (+ `tile_m · tile_n · 2` if CShuffle).
   Limits: 64 KB on gfx942, 160 KB on gfx950.
 
@@ -123,17 +122,10 @@ kernels, not hgemm.
 
 ## C. Block reduction (norm / softmax building block)
 
-```
- per lane : reduce the vector in registers  (range_constexpr over VEC)
- per wave : xor-shuffle 32,16,8,4,2,1        gpu.shuffle_xor(v, sh, 64)
- per block: lane0 of each wave → LDS[wave] ; barrier
-            wave0 reads NUM_WAVES partials (others pad with identity) → shuffle-reduce
-            lane0 → LDS[0] ; barrier ; everyone reads LDS[0]
-```
+The wave-shuffle + LDS block reduction is in [flydsl-kernel-authoring](https://github.com/ROCm/FlyDSL/tree/main/.claude/skills/flydsl-kernel-authoring) §7. Two rules it leaves out:
 
 - Two barriers per reduction. Fuse max and sum into one pass (online softmax) to halve them.
 - Padding lanes must hold the **identity** (`-inf` for max, `0` for sum).
-- Library versions live with the norm kernels (`kernels/norm/*`, `kernels/common/kernels_common.py`).
 
 Sources: [ROCm/FlyDSL](https://github.com/ROCm/FlyDSL) — `kernels/gemm/preshuffle_gemm.py` (`compile_preshuffle_gemm`, `_TILE_PRELOAD_TABLE`), `kernels/common/mma/mfma_preshuffle_pipeline.py` (`make_preshuffle_b_layout`, `xcd_remap_bx_by`), `kernels/moe/moe_common.py` (`GateMode`), `kernels/moe/moe_gemm_2stage/gemm1.py`, `gemm2.py` (`compile_moe_gemm2` docstring), `kernels/moe/mxfp_moe/`, `kernels/norm/`, `docs/kernel_tuning_guide.md`, `docs/prebuilt_kernels_guide.md`, `.claude/skills/gemm-optimization/SKILL.md`; [ROCm/aiter](https://github.com/ROCm/aiter) — `aiter/ops/flydsl/moe_kernels.py`, `aiter/ops/flydsl/gemm_kernels.py`; [AMD Matrix Instruction Calculator](https://github.com/ROCm/amd_matrix_instruction_calculator) (MFMA shapes and lane maps); [AMD CDNA4 ISA](https://www.amd.com/content/dam/amd/en/documents/instinct-tech-docs/instruction-set-architectures/amd-instinct-cdna4-instruction-set-architecture.pdf).
 Paths drift; verify before use. Verify specifics against the primary source.

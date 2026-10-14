@@ -39,7 +39,6 @@ seq_start = buffer_ops.buffer_load(rsrc, fx.Int32(b),   vec_width=1, dtype=fx.T.
 seq_end   = buffer_ops.buffer_load(rsrc, fx.Int32(b)+fx.Int32(1), vec_width=1, dtype=fx.T.i32)
 ```
 
-`fx.T.*` are properties: write `fx.T.i32`, not `fx.T.i32()`.
 
 **Scalarize uniform values** with `readfirstlane` so they land in SGPRs:
 `seq_start = fx.rocdl.readfirstlane(fx.T.i32, seq_start)`. This matters in the
@@ -66,19 +65,14 @@ gA_k  = fx.flat_divide(A_buf, (BLOCK_M, BLOCK_K))[None, None, block_m_idx, None]
 
 ## 3. Runtime early-exit — positive guard, never bare `return`
 
-A plain Python `if runtime_cond:` inside `@flyc.kernel` is auto-rewritten to
-`scf.IfOp` (ast_rewriter `ReplaceIfWithDispatch`). Use the **positive guard**
-wrapping the whole body — a bare `return` inside a dynamic `if` may not lower
-cleanly:
+Wrap the whole body in one positive runtime guard (no early `return`; rules in [flydsl-kernel-authoring](https://github.com/ROCm/FlyDSL/tree/main/.claude/skills/flydsl-kernel-authoring) §3):
 
 ```python
-if start_m < M_b:        # runtime → scf.IfOp guarding all compute + store
+if start_m < M_b:        # runtime → scf.if guarding all compute + store
     ... mainloop + epilogue ...
 ```
 
-Caveat (branch-local rule): a value defined only inside a branch
-leaks as a `NameError` when used after it — hoist it or use a ternary. Empty
-groups (`M_b == 0`) are handled for free: every tile fails the guard.
+Empty groups (`M_b == 0`) are handled for free: every tile fails the guard.
 
 ## 4. Bounded buffer descriptor (HW OOB-drop for partial tiles)
 
@@ -109,10 +103,8 @@ its `preshuffle_layout_B` **view** (omit that), **not** the K-layout. The nested
 
 ## 6. bf16 epilogue + broadcast bias
 
-```python
-bias_f32 = fx.Vector(bias_frag.load()).to(fx.Float32)          # extend bias first
-mma_frag_C_bf16.store((fx.Vector(mma_frag_C.load()) + bias_f32).to(fx.BFloat16))
-```
+Add the bias in fp32, then cast to bf16 (`Vector.to`).
+
 
 Broadcast bias = a **stride-0 M view** of the group's `(N,)` slice, partitioned
 with the *same* `make_tiled_copy_C` slice as the output so per-thread N-coords
@@ -130,9 +122,8 @@ When the tile body lives inside an `scf.for` persistent loop:
   merely read inside, the DSL auto-promotes them to `scf.for` iter_args (block
   args), and the gemm-op lowering's `getDefiningOp<MakeTiledMma>` then fails. They
   are loop-invariant, so LICM can still hoist the cheap setup later.
-- **Allocate LDS with `fx.SharedAllocator`.** Its views are taken per use, so iterations do
-  not reuse a cached view's SSA values (the legacy `SmemPtr` path needed a manual cache
-  reset to avoid that dominance error). Build a view at kernel top if the epilogue uses it.
+- LDS views inside the loop: use `fx.SharedAllocator` ([flydsl-kernel-code-cleanup](https://github.com/ROCm/aiter/tree/main/.claude/skills/flydsl-kernel-code-cleanup) §4 covers the legacy `SmemPtr`
+  cached-view dominance error).
 
 ---
 Related: [measurement](../../kernel-optimization/method/measurement.md) · [hot-loop-scheduling](hot-loop-scheduling.md) · [work-decomposition](../../kernel-optimization/levers/work-decomposition.md)
