@@ -84,6 +84,9 @@ Judge a hint by the instruction order it produces.
 
 - **A deeper buffer needs a pipeline that reads it, and one K-tile can break a 2-stage loop.** Allocating a third stage buffer is a no-op unless the pipeline actually cycles through it. A tile depth equal to the whole reduction (a single K-tile) can silently mis-accumulate in a 2-stage double-buffer epilogue. Cosine similarity hid a 123% relative error, so also check mean signed error.
 - **LDS size caps pipeline depth.** LDS use grows as tile bytes × stages. With 64 KB LDS (CDNA3), a GEMM tile typically fits 2 stages, and two fused GEMMs fit 1. With 160 KB (CDNA4), 3 to 4 stages fit. Size the stages before you tune the schedule. ([ROCm workload optimization](https://rocm.docs.amd.com/en/latest/how-to/rocm-for-ai/inference-optimization/workload.html))
+- **Pin an accumulator so its updates are not sunk to the last use.** In an unrolled loop of `acc = acc * a + v * b` updates, the compiler can move every update next to the final store. Every loaded value then stays live in FP32 until the end, so VGPR use grows with the loop length. An empty side-effect inline asm that takes the accumulator registers as `v` operands after each update forces each update to run in place, so the loaded values die early (e.g. 288 → 160 VGPR, from 1 to 3 waves per SIMD). Scheduling barriers do not help, because the sinking happens before the machine scheduler runs. Check the ISA VGPR count before and after. ([LLVM inline assembler expressions](https://llvm.org/docs/LangRef.html#inline-assembler-expressions))
+
+FlyDSL specifics: [pitfalls](../../dsl/flydsl/pitfalls.md#6-register-pin-against-accumulator-sinking).
 
 ck_dsl specifics: [primitive-map](../../dsl/ck-dsl/primitive-map.md#pipelining-scheduling).
 

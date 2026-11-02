@@ -1,6 +1,6 @@
 ---
 name: pitfalls
-description: "FlyDSL traps: unrolled-alias prefetch, SSA list indexing, MFMA operand order, strided torch views, stale cache, hangs, and an isolation workflow for wrong numbers."
+description: "FlyDSL traps: unrolled-alias prefetch, SSA list indexing, MFMA operand order, strided torch views, stale cache, hangs, an isolation workflow for wrong numbers, and an inline-asm register pin."
 source: https://github.com/ROCm/FlyDSL (.claude/skills/debug-flydsl-kernel/SKILL.md, docs/kernel_tuning_guide.md, python/flydsl/compiler/ast_rewriter.py)
 ---
 
@@ -58,6 +58,23 @@ Clues from how the output looks:
 | 1–5 % wrong | quantization / scale mismatch, or a scale applied twice |
 | NaN only on masked rows | `exp(-inf - (-inf))`. Guard the max with `select(max > -inf, diff, 0)` and the sum with `select(sum > 0, sum, 1)` |
 | "close but low SNR" softmax | log-sum-exp in a different domain (natural log vs scaled log2) from the reference |
+
+## 6. Register pin against accumulator sinking
+
+FlyDSL 0.4.1 has no public generic inline asm (`fx.rocdl.inline_asm` wraps only a few
+`v_cvt` instructions), so a pin goes through the MLIR LLVM dialect:
+
+```python
+from flydsl._mlir.dialects import llvm
+
+def pin_registers(values):
+    llvm.inline_asm(None, [v.ir_value() for v in values], "",
+                    ",".join("v" for _ in values), has_side_effects=True)
+```
+
+Call it on the accumulator vectors after each update. `rocdl.sched_barrier(0)` after the
+update does not change the ISA, because the update is sunk during instruction selection.
+General rule: [pipelining-scheduling](../../kernel-optimization/levers/pipelining-scheduling.md).
 
 Sources: [ROCm/FlyDSL](https://github.com/ROCm/FlyDSL) — `.claude/skills/debug-flydsl-kernel/SKILL.md`, `docs/kernel_tuning_guide.md`, `docs/architecture_guide.md`, `python/flydsl/compiler/ast_rewriter.py` (`scf_range`, `_transform_for_auto`, `scf_for_dispatch`); [PyTorch `Tensor.clone`](https://pytorch.org/docs/stable/generated/torch.clone.html) (`memory_format=torch.preserve_format`).
 Paths drift; verify before use.
