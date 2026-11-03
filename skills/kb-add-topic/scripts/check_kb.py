@@ -21,7 +21,7 @@ import sys
 
 import yaml
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+HERE = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_ROOT = os.path.normpath(os.path.join(HERE, "..", "..", ".."))
 ROOT = os.path.abspath(os.path.expanduser(sys.argv[1] if len(sys.argv) > 1 else DEFAULT_ROOT))
 SKIP_DIRS = {".git"}
