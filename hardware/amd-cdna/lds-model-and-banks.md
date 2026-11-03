@@ -105,6 +105,7 @@ Sources:
 ## Lessons from worked examples
 
 - **M0 supplies the LDS address for load-to-LDS.** Buffer and global loads that write straight to LDS take their LDS base from the M0 register, not from a VGPR. Set or advance M0 before each such load, or consecutive loads overwrite the same LDS region. ([CDNA3 ISA](https://www.amd.com/content/dam/amd/en/documents/instinct-tech-docs/instruction-set-architectures/amd-instinct-mi300-cdna3-instruction-set-architecture.pdf), MUBUF LDS loads)
+- **Fix the lane order before you tune a swizzle.** For a staged GEMM operand, the order in which lanes walk the tile decides whether any swizzle can clear both sides. With lanes walking K first, one XOR swizzle per write width made reads and writes conflict-free. With lanes walking N first, every swizzle tried still conflicted. Choose the lane order first, then size the swizzle to the access width (e.g. in a gfx942 bank model, not a hardware measurement: `Swizzle(3,3,2)` for `b64` writes and `Swizzle(3,3,3)` for `b32` writes).
 
 ---
 Related: [gfx950](gfx950.md) · [memory-hierarchy](../../kernel-optimization/levers/memory-hierarchy.md) · [memory-ladder-xcd-hbm](memory-ladder-xcd-hbm.md) · [matrix-core-generations](matrix-core-generations.md)
