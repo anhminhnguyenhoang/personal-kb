@@ -10,6 +10,7 @@ General notes on GPU hardware, kernel-optimization method, research papers, and 
 | [kernel-optimization/](kernel-optimization/README.md) | A DSL-neutral method: the loop, measurement, bottleneck diagnosis, levers, autotuning, failure modes. |
 | [papers/](papers/README.md) | Notes on HipKittens (AMD tile DSL) and FlashAttention-4 (Blackwell attention). |
 | [dsl/](dsl/README.md) | How each tool spells a concept: FlyDSL, Triton, HIP, Composable Kernel, ck_dsl, AMDGCN assembly, and the aiter, MoRI, hipBLASLt, sglang, and vLLM libraries. |
+| [skills/](skills/README.md) | Agent skills that maintain this KB, such as kb-add-topic. Tooling, not knowledge. |
 
 ## Conventions
 
